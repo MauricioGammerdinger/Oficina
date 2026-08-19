@@ -1,0 +1,96 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  # Um push novo cancela a checagem antiga do mesmo branch.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificar:
+    name: Lint, tipos e build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Checagem de tipos
+        run: npx tsc --noEmit
+
+      - name: Build
+        # O build não precisa de banco: todas as telas são dinâmicas.
+        run: npm run build
+
+  testar:
+    name: Teste de fumaça no navegador
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: oficina
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/oficina
+      APP_PASSWORD: senha-de-teste
+      AUTH_SECRET: segredo-so-para-o-ci-nao-usar-em-producao
+      TEST_PASSWORD: senha-de-teste
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Instalar o Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Migrar e semear o banco
+        run: |
+          npm run db:migrate
+          npm run seed
+
+      - name: Subir a aplicação
+        run: |
+          npm run build
+          npm run start &
+          npx wait-on http://localhost:3000/entrar --timeout 60000
+
+      - name: Rodar o teste de fumaça
+        run: npm run test:smoke
+
+      - name: Guardar os prints
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prints-das-telas
+          path: tests/shots/
+          if-no-files-found: ignore
