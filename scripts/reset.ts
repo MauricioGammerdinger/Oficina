@@ -2,7 +2,7 @@
  * Apaga TODOS os dados (mantém as tabelas) e roda o seed de novo.
  * Use só em desenvolvimento:  npm run db:reset
  */
-import "dotenv/config";
+import "./carregar-env";
 import { sql } from "drizzle-orm";
 import { db } from "../src/db";
 

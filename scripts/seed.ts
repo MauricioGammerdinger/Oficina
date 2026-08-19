@@ -5,7 +5,7 @@
  *
  *   npm run seed
  */
-import "dotenv/config";
+import "./carregar-env";
 import { sql } from "drizzle-orm";
 
 import { db } from "../src/db";
