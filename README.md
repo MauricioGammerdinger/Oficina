@@ -19,6 +19,16 @@ responde na hora se o serviço compensa.
 | **Carros**    | Carros da semana com valor cobrado, checklist de serviços e a conta cobrado − material = sobra. |
 | **Contagem**  | Inventário físico. Ao fechar, acerta o saldo do sistema e mostra o quanto sumiu.          |
 | **Serviços**  | A receita de cada tipo de serviço: quanto de cada insumo ele consome.                     |
+| **Config**    | E-mail que recebe o alerta diário de compras, liga/desliga o alerta, botão de testar.     |
+
+### Alerta de compras por e-mail
+
+Uma vez por dia (tarefa agendada da Vercel) o sistema confere a lista de
+compras e, se tiver algo no mínimo, manda um e-mail. O e-mail de destino e se
+o alerta está ligado ficam guardados no banco e são configurados na tela
+**Config** — cada pessoa que usa o sistema aponta o próprio e-mail ali, sem
+mexer em variável de ambiente nenhuma. Veja "Publicando de graça" abaixo para
+o que precisa ser configurado uma vez no servidor (a chave do Resend).
 
 ### Como as telas se conectam
 
@@ -66,6 +76,10 @@ APP_PASSWORD=a-senha-de-acesso
 AUTH_SECRET=string-longa-aleatoria     # openssl rand -hex 32
 ```
 
+As variáveis do alerta por e-mail (`RESEND_API_KEY`, `ALERT_EMAIL_FROM`,
+`CRON_SECRET`) são opcionais em dev — sem elas o alerta simplesmente avisa que
+falta configuração, sem quebrar nada. Veja `.env.example`.
+
 Comandos úteis:
 
 ```bash
@@ -99,6 +113,45 @@ DATABASE_URL="a-string-do-neon" npm run db:migrate
 
 Pronto. A mesma URL abre no computador e no celular — é uma aplicação
 responsiva, não precisa instalar app nenhum.
+
+**3. Alerta por e-mail (opcional) — [Resend](https://resend.com)**
+
+Crie uma conta gratuita, gere uma API key em *API Keys*, e adicione na Vercel:
+
+```
+RESEND_API_KEY=a-chave-do-resend
+CRON_SECRET=string-longa-aleatoria     # openssl rand -hex 32, protege a rota do alerta
+```
+
+`ALERT_EMAIL_FROM` é opcional — sem preencher, usa o remetente padrão do
+Resend (`onboarding@resend.dev`), que não exige verificar domínio. O e-mail
+de destino não vai aqui: cada pessoa configura o próprio na tela **Config**
+dentro do site, com um botão para testar na hora. A tarefa agendada
+(`vercel.json`) roda uma vez por dia — no free tier da Vercel não dá pra
+rodar mais de uma vez ao dia.
+
+**4. Ambiente separado para você testar (opcional, mas recomendado)**
+
+Antes de mexer no que ela usa de verdade, vale ter um segundo ambiente só seu,
+com banco próprio, para testar sem risco:
+
+1. Crie um **segundo projeto no Neon** (ex.: `oficina-dev`) — igual ao
+   primeiro, mas vazio.
+2. No seu computador, aponte o `.env.local` para essa string de conexão nova
+   e use uma `APP_PASSWORD` diferente da dela (ex.: `teste123`). Rode
+   `npm run db:migrate` e `npm run seed` nesse banco novo. Daqui pra frente,
+   `npm run dev` no seu PC sempre bate nesse banco de teste, nunca no dela.
+3. Se quiser um link também (não só local), crie um **segundo projeto na
+   Vercel** apontando pro mesmo repositório do GitHub, com suas próprias
+   variáveis de ambiente (`DATABASE_URL` do banco de teste, sua própria
+   `APP_PASSWORD`). Fica com uma URL diferente (ex.:
+   `oficina-dev.vercel.app`), sem tocar no projeto de produção dela.
+
+Como cada ambiente já tem seu próprio banco e sua própria senha, isso já
+resolve a separação: o login dela continua sendo o dela, e o seu vira uma
+senha diferente que só existe no ambiente de teste — sem o sistema precisar
+saber que existem "dois usuários", porque na prática são dois sistemas
+inteiros, independentes.
 
 ## Decisões técnicas que valem saber
 

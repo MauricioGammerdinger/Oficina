@@ -198,6 +198,25 @@ if (/(^|\D)3(\D|$)/.test(sistemaAgora))
   ok("ajuste da contagem acertou o saldo (9,5 -> 3)");
 else bad(`saldo após ajuste: ${sistemaAgora.replace(/\n/g, " | ")}`);
 
+// --- configurações do alerta de e-mail
+await page.goto(`${base}/configuracoes`);
+await page.fill('input[name="email"]', "teste-smoke@exemplo.com");
+await page.check('input[name="enabled"]');
+await Promise.all([page.waitForNavigation(), page.click("text=Salvar")]);
+const emailSalvo = await page.inputValue('input[name="email"]');
+if (emailSalvo === "teste-smoke@exemplo.com")
+  ok("configuração do alerta salva e volta preenchida");
+else bad(`e-mail do alerta não persistiu: ${emailSalvo}`);
+
+await page.click("text=Testar agora");
+await page.waitForSelector('[role="status"]', { timeout: 15000 });
+const resultadoTeste = await page.textContent('[role="status"]');
+// Sem RESEND_API_KEY configurada no ambiente de teste, o esperado é a
+// mensagem de configuração pendente — não um erro de JS ou travamento.
+if (resultadoTeste && /Não enviou|enviado/.test(resultadoTeste))
+  ok("botão 'testar agora' responde");
+else bad(`botão de teste não respondeu como esperado: ${resultadoTeste}`);
+
 // --- mobile
 const mob = await browser.newContext({
   viewport: { width: 390, height: 844 },

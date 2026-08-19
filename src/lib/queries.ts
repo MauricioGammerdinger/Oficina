@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import { db } from "@/db";
+import { appSettings } from "@/db/schema";
 
 export type ProductRow = {
   id: number;
@@ -332,4 +333,27 @@ export async function getRecentMoves(limit = 40) {
     vehicleModel: r.vehicleModel === null ? null : String(r.vehicleModel),
     vehiclePlate: r.vehiclePlate === null ? null : String(r.vehiclePlate),
   }));
+}
+
+/**
+ * Configuração do alerta de compras por e-mail. Fica no banco (não em
+ * variável de ambiente) porque cada pessoa que usa o sistema — ela na
+ * produção, alguém testando em outro ambiente — quer configurar o próprio
+ * e-mail de destino direto pela tela, sem mexer em nada além do site.
+ */
+export type AlertSettings = {
+  email: string | null;
+  enabled: boolean;
+};
+
+export async function getAlertSettings(): Promise<AlertSettings> {
+  const rows = await db
+    .select()
+    .from(appSettings)
+    .where(sql`${appSettings.key} in ('alert_email', 'alert_enabled')`);
+
+  const email = rows.find((r) => r.key === "alert_email")?.value ?? null;
+  const enabled = rows.find((r) => r.key === "alert_enabled")?.value === "1";
+
+  return { email, enabled };
 }

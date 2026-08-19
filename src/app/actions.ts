@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 
 import { db } from "@/db";
 import {
+  appSettings,
   countItems,
   counts,
   products,
@@ -17,6 +18,7 @@ import {
   vehicles,
 } from "@/db/schema";
 import { COOKIE_NAME, sessionToken } from "@/lib/auth";
+import { enviarAlertaDeCompras } from "@/lib/alerta-email";
 import { parseId, parseNum, parseStr } from "@/lib/parse";
 import { getProducts, getVehiclePlannedItems } from "@/lib/queries";
 
@@ -435,4 +437,41 @@ export async function fecharContagem(formData: FormData) {
   revalidatePath("/contagem");
   revalidatePath("/estoque");
   revalidatePath("/comprar");
+}
+
+/* --------------------------------------------------------- configurações */
+
+/**
+ * Guarda a configuração do alerta de e-mail no banco (não em variável de
+ * ambiente): assim quem estiver usando o sistema — ela na produção, alguém
+ * testando em outro ambiente — configura o próprio e-mail direto na tela,
+ * sem precisar mexer em nada na Vercel.
+ */
+export async function salvarConfiguracaoAlerta(formData: FormData) {
+  const email = parseStr(formData.get("email"));
+  const enabled = formData.get("enabled") === "on";
+
+  await db
+    .insert(appSettings)
+    .values([
+      { key: "alert_email", value: email },
+      { key: "alert_enabled", value: enabled ? "1" : "0" },
+    ])
+    .onConflictDoUpdate({
+      target: appSettings.key,
+      set: { value: sql`excluded.value`, updatedAt: new Date() },
+    });
+
+  revalidatePath("/configuracoes");
+}
+
+/**
+ * Botão "testar agora": dispara o e-mail na hora, com o que estiver
+ * configurado no momento, pra confirmar que chegou antes de confiar na
+ * tarefa agendada.
+ */
+export async function testarAlertaAgora() {
+  const resultado = await enviarAlertaDeCompras({ ignorarListaVazia: true });
+  revalidatePath("/configuracoes");
+  return resultado;
 }

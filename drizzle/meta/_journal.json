@@ -15,6 +15,13 @@
       "when": 1787166360880,
       "tag": "0001_tense_zodiak",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787182747127,
+      "tag": "0002_tan_archangel",
+      "breakpoints": true
     }
   ]
 }
