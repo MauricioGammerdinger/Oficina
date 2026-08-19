@@ -33,7 +33,7 @@ const browser = await chromium.launch(
 // Desktop
 const ctx = await browser.newContext({ viewport: { width: 1100, height: 900 } });
 const page = await ctx.newPage();
-page.on("pageerror", (e) => bad(`erro de JS: ${e.message}`));
+page.on("pageerror", (e) => bad(`erro de JS: ${e.message.split("\n")[0]}`));
 
 // --- login
 await page.goto(`${base}/estoque`);
@@ -153,7 +153,9 @@ if (antesBaixa !== depoisBaixa) ok("página reflete a baixa na hora");
 
 // estoque caiu?
 await page.goto(`${base}/estoque?q=Massa%20poli`);
-const aposBaixa = await page.locator("summary").first().innerText();
+const aposBaixa = await page
+  .locator("summary", { hasText: "Massa poliéster 900g" })
+  .innerText();
 if (aposBaixa.includes("9,5")) ok("saldo caiu 0,5 pela receita (10 -> 9,5)");
 else bad(`saldo após baixa: ${aposBaixa.replace(/\n/g, " | ")}`);
 
@@ -216,8 +218,8 @@ else bad("página vaza na horizontal no celular");
 
 // --- logout
 await page.goto(`${base}/estoque`);
-await page.click('button:has-text("sair")');
-await page.waitForURL("**/entrar");
+await page.locator("header").getByRole("button", { name: "sair" }).click();
+await page.waitForURL("**/entrar", { timeout: 15000 });
 ok("logout funciona");
 
 await browser.close();

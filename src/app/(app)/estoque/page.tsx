@@ -60,26 +60,8 @@ export default async function EstoquePage({
         <button className="botao-claro">Buscar</button>
       </form>
 
-      <section className="cartao overflow-hidden">
-        {produtos.length === 0 ? (
-          <p className="px-3 py-8 text-center text-sm text-neutral-500">
-            {busca
-              ? "Nenhum insumo com esse nome."
-              : "Nenhum insumo cadastrado ainda. Começa cadastrando abaixo."}
-          </p>
-        ) : (
-          produtos.map((produto) => (
-            <LinhaEstoque
-              key={produto.id}
-              produto={produto}
-              veiculos={carrosAbertos}
-            />
-          ))
-        )}
-      </section>
-
       <details className="cartao p-4">
-        <summary className="cursor-pointer text-sm font-medium">
+        <summary className="cursor-pointer text-sm font-medium text-neutral-800 marker:content-none hover:text-black">
           + Cadastrar insumo
         </summary>
         <form action={criarProduto} className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -117,6 +99,25 @@ export default async function EstoquePage({
           </div>
         </form>
       </details>
+
+      <section className="cartao overflow-hidden">
+        {produtos.length === 0 ? (
+          <p className="px-3 py-8 text-center text-sm text-neutral-500">
+            {busca
+              ? "Nenhum insumo com esse nome."
+              : "Nenhum insumo cadastrado ainda. Use o \"Cadastrar insumo\" acima."}
+          </p>
+        ) : (
+          produtos.map((produto) => (
+            <LinhaEstoque
+              key={produto.id}
+              produto={produto}
+              veiculos={carrosAbertos}
+            />
+          ))
+        )}
+      </section>
+
 
       <details className="cartao p-4">
         <summary className="cursor-pointer text-sm font-medium">

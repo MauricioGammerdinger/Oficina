@@ -97,6 +97,11 @@ export function LinhaEstoque({
               className="campo"
               required
             />
+            <input
+              name="note"
+              placeholder="Quem pegou (opcional)"
+              className="campo"
+            />
             <select name="vehicleId" className="campo" defaultValue="">
               <option value="">Sem carro específico</option>
               {veiculos.map((v) => (
