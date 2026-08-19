@@ -357,3 +357,117 @@ export async function getAlertSettings(): Promise<AlertSettings> {
 
   return { email, enabled };
 }
+
+/* --------------------------------------------------------- relatórios */
+
+/**
+ * Resumo geral do negócio: quanto entrou (carros concluídos), quanto saiu em
+ * material, e a margem. É tudo-o-tempo-todo de propósito — com o volume de
+ * uma oficina pequena, filtrar por mês corrido some com carros que atravessam
+ * a virada do mês e confunde mais do que ajuda.
+ */
+export async function getResumoNegocio() {
+  const { rows } = await db.execute(sql`
+    select
+      count(*)                                     as "carros",
+      coalesce(sum(v.price), 0)                     as "faturado",
+      coalesce(sum(m.custo), 0)                     as "material"
+    from vehicles v
+    left join lateral (
+      select sum(sm.qty * coalesce(sm.unit_cost, p.cost)) as custo
+        from stock_moves sm
+        join products p on p.id = sm.product_id
+       where sm.vehicle_id = v.id and sm.kind = 'out'
+    ) m on true
+    where v.status = 'concluido'
+  `);
+  const r = rows[0] ?? {};
+  const faturado = num(r.faturado);
+  const material = num(r.material);
+  return {
+    carros: num(r.carros),
+    faturado,
+    material,
+    margem: faturado - material,
+  };
+}
+
+/**
+ * Gasto em compras (entradas de estoque) mês a mês, últimos `meses` meses —
+ * inclusive os que não tiveram nenhuma compra, pra a barra não sumir do
+ * gráfico e parecer erro.
+ */
+const MESES_PT = [
+  "jan", "fev", "mar", "abr", "mai", "jun",
+  "jul", "ago", "set", "out", "nov", "dez",
+];
+
+export async function getGastoComprasPorMes(meses = 6) {
+  const { rows } = await db.execute(sql`
+    select
+      to_char(mes, 'YYYY-MM')                        as "mes",
+      coalesce(sum(sm.qty * coalesce(sm.unit_cost, 0)), 0) as "total"
+    from generate_series(
+           date_trunc('month', now()) - (${meses - 1} || ' months')::interval,
+           date_trunc('month', now()),
+           interval '1 month'
+         ) as mes
+    left join stock_moves sm
+      on sm.kind = 'in'
+     and date_trunc('month', sm.created_at) = mes
+    group by mes
+    order by mes
+  `);
+  return rows.map((r) => {
+    const mes = String(r.mes);
+    const [ano, numMes] = mes.split("-");
+    return {
+      mes,
+      rotulo: `${MESES_PT[Number(numMes) - 1]}/${ano.slice(2)}`,
+      total: num(r.total),
+    };
+  });
+}
+
+/** Insumos que mais saíram do estoque nos últimos `dias` dias. */
+export async function getTopConsumo(dias = 30, limit = 6) {
+  const { rows } = await db.execute(sql`
+    select
+      p.name,
+      p.unit,
+      sum(sm.qty)                                     as "qty",
+      sum(sm.qty * coalesce(sm.unit_cost, p.cost))     as "valor"
+    from stock_moves sm
+    join products p on p.id = sm.product_id
+    where sm.kind = 'out'
+      and sm.created_at >= now() - (${dias} || ' days')::interval
+    group by p.id, p.name, p.unit
+    order by valor desc
+    limit ${limit}
+  `);
+  return rows.map((r) => ({
+    name: String(r.name),
+    unit: String(r.unit),
+    qty: num(r.qty),
+    valor: num(r.valor),
+  }));
+}
+
+/**
+ * Quanto sumiu (ajuste negativo de contagem) em valor, desde sempre e nos
+ * últimos 90 dias — é o número que mostra se está sumindo material sem
+ * ninguém anotar.
+ */
+export async function getPerdaContagens() {
+  const { rows } = await db.execute(sql`
+    select
+      coalesce(sum(case when sm.qty < 0 then -sm.qty * coalesce(sm.unit_cost, p.cost) else 0 end), 0) as "total",
+      coalesce(sum(case when sm.qty < 0 and sm.created_at >= now() - interval '90 days'
+                    then -sm.qty * coalesce(sm.unit_cost, p.cost) else 0 end), 0) as "ultimos90"
+    from stock_moves sm
+    join products p on p.id = sm.product_id
+    where sm.kind = 'adjust'
+  `);
+  const r = rows[0] ?? {};
+  return { total: num(r.total), ultimos90: num(r.ultimos90) };
+}

@@ -217,6 +217,13 @@ if (resultadoTeste && /Não enviou|enviado/.test(resultadoTeste))
   ok("botão 'testar agora' responde");
 else bad(`botão de teste não respondeu como esperado: ${resultadoTeste}`);
 
+// --- relatórios
+await page.goto(`${base}/relatorios`);
+const relTxt = await page.locator("main").innerText();
+if (/carros conclu[ií]dos/i.test(relTxt) && /Gasto em compras por mês/.test(relTxt))
+  ok("relatórios carrega resumo e gráfico de compras");
+else bad("relatórios não mostrou o esperado");
+
 // --- mobile
 const mob = await browser.newContext({
   viewport: { width: 390, height: 844 },

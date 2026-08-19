@@ -19,6 +19,7 @@ responde na hora se o serviço compensa.
 | **Carros**    | Carros da semana com valor cobrado, checklist de serviços e a conta cobrado − material = sobra. |
 | **Contagem**  | Inventário físico. Ao fechar, acerta o saldo do sistema e mostra o quanto sumiu.          |
 | **Serviços**  | A receita de cada tipo de serviço: quanto de cada insumo ele consome.                     |
+| **Relatórios**| Faturado, material gasto e margem (carros concluídos), gasto em compras por mês, insumos que mais saíram e perda encontrada nas contagens. |
 | **Config**    | E-mail que recebe o alerta diário de compras, liga/desliga o alerta, botão de testar.     |
 
 ### Alerta de compras por e-mail
