@@ -12,6 +12,16 @@ export const viewport: Viewport = {
   themeColor: "#1a1a19",
 };
 
+// Aplica o tema salvo antes da página pintar, pra não dar aquele flash de
+// tela clara e depois escura. Roda antes de qualquer coisa do React.
+const scriptTema = `
+  try {
+    var tema = localStorage.getItem("tema");
+    var escuro = tema ? tema === "escuro" : matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.classList.toggle("dark", escuro);
+  } catch (e) {}
+`;
+
 export default function RootLayout({
   children,
 }: {
@@ -19,6 +29,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR" className="h-full antialiased">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: scriptTema }} />
+      </head>
       <body className="min-h-full">{children}</body>
     </html>
   );

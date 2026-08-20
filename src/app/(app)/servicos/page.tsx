@@ -26,7 +26,7 @@ export default async function ServicosPage() {
       </div>
 
       <details className="cartao p-4">
-        <summary className="cursor-pointer text-sm font-medium">
+        <summary className="cursor-pointer text-sm font-medium dark:text-neutral-200">
           + Novo tipo de serviço
         </summary>
         <form action={criarTipoServico} className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -80,7 +80,7 @@ export default async function ServicosPage() {
                 Sem insumos na receita — esse serviço vai contar como custo zero.
               </p>
             ) : (
-              <ul className="mt-3 divide-y divide-neutral-100 text-sm">
+              <ul className="mt-3 divide-y divide-neutral-100 text-sm dark:divide-neutral-800">
                 {tipo.items.map((item) => (
                   <li key={item.id} className="flex items-center gap-2 py-2">
                     <span className="min-w-0 flex-1 truncate">
@@ -117,7 +117,7 @@ export default async function ServicosPage() {
             {disponiveis.length > 0 && (
               <form
                 action={salvarReceitaItem}
-                className="mt-3 flex flex-wrap items-end gap-2 border-t border-neutral-100 pt-3"
+                className="mt-3 flex flex-wrap items-end gap-2 border-t border-neutral-100 pt-3 dark:border-neutral-800"
               >
                 <input type="hidden" name="serviceTypeId" value={tipo.id} />
                 <div className="min-w-40 flex-1">

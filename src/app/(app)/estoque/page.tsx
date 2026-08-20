@@ -61,7 +61,7 @@ export default async function EstoquePage({
       </form>
 
       <details className="cartao p-4">
-        <summary className="cursor-pointer text-sm font-medium text-neutral-800 marker:content-none hover:text-black">
+        <summary className="cursor-pointer text-sm font-medium text-neutral-800 marker:content-none hover:text-black dark:text-neutral-200 dark:hover:text-white">
           + Cadastrar insumo
         </summary>
         <form action={criarProduto} className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -120,10 +120,10 @@ export default async function EstoquePage({
 
 
       <details className="cartao p-4">
-        <summary className="cursor-pointer text-sm font-medium">
+        <summary className="cursor-pointer text-sm font-medium dark:text-neutral-200">
           Últimas movimentações
         </summary>
-        <ul className="mt-3 divide-y divide-neutral-100 text-sm">
+        <ul className="mt-3 divide-y divide-neutral-100 text-sm dark:divide-neutral-800">
           {movimentos.length === 0 && (
             <li className="py-2 text-neutral-500">Nada lançado ainda.</li>
           )}
@@ -153,7 +153,7 @@ export default async function EstoquePage({
                   <span className="text-neutral-400"> · {m.note}</span>
                 )}
               </span>
-              <span className="shrink-0 tabular-nums text-neutral-600">
+              <span className="shrink-0 tabular-nums text-neutral-600 dark:text-neutral-400">
                 {m.kind === "out" ? "−" : m.qty < 0 ? "" : "+"}
                 {fmtQty(Math.abs(m.qty))} {m.unit}
               </span>

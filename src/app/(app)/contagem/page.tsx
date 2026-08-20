@@ -33,7 +33,7 @@ export default async function ContagemPage() {
           <input type="hidden" name="countId" value={aberta.id} />
 
           <div className="cartao overflow-hidden">
-            <div className="flex items-center gap-3 border-b border-neutral-200 bg-neutral-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+            <div className="flex items-center gap-3 border-b border-neutral-200 bg-neutral-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:border-neutral-800 dark:bg-neutral-900">
               <span className="min-w-0 flex-1">Insumo</span>
               <span className="w-20 text-right">Sistema</span>
               <span className="w-24 text-right">Contado</span>
@@ -54,7 +54,7 @@ export default async function ContagemPage() {
               return (
                 <div
                   key={linha.id}
-                  className="flex items-center gap-3 border-b border-neutral-100 px-3 py-2 last:border-0"
+                  className="flex items-center gap-3 border-b border-neutral-100 px-3 py-2 last:border-0 dark:border-neutral-800"
                 >
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm">{linha.name}</span>
@@ -113,13 +113,13 @@ export default async function ContagemPage() {
       {historico.length > 0 && (
         <section className="cartao p-4">
           <h2 className="text-sm font-medium">Contagens anteriores</h2>
-          <ul className="mt-3 divide-y divide-neutral-100 text-sm">
+          <ul className="mt-3 divide-y divide-neutral-100 text-sm dark:divide-neutral-800">
             {historico.map((c) => (
               <li key={c.id} className="flex items-center gap-3 py-2">
                 <span className="w-20 shrink-0 text-neutral-500">
                   {new Date(c.closedAt).toLocaleDateString("pt-BR")}
                 </span>
-                <span className="min-w-0 flex-1 truncate text-neutral-600">
+                <span className="min-w-0 flex-1 truncate text-neutral-600 dark:text-neutral-400">
                   {c.note ?? `Contagem #${c.id}`} · {c.linesCounted} itens
                 </span>
                 <span className="shrink-0 tabular-nums text-neutral-500">

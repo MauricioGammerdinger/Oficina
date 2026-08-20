@@ -15,7 +15,7 @@ export default async function ComprarPage() {
         {lista.length > 0 && (
           <p className="text-sm text-neutral-500">
             {lista.length} {lista.length === 1 ? "item" : "itens"} ·{" "}
-            <span className="font-medium text-neutral-800">{money(total)}</span>{" "}
+            <span className="font-medium text-neutral-800 dark:text-neutral-200">{money(total)}</span>{" "}
             estimado
           </p>
         )}
@@ -29,7 +29,7 @@ export default async function ComprarPage() {
           </p>
         </div>
       ) : (
-        <section className="cartao divide-y divide-neutral-100">
+        <section className="cartao divide-y divide-neutral-100 dark:divide-neutral-800">
           {lista.map((item) => (
             <div key={item.id} className="p-3">
               <div className="flex items-start gap-3">

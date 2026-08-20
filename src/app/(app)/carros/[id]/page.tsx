@@ -67,7 +67,7 @@ export default async function CarroPage({
       </div>
 
       {/* Resumo da conta: é isso que responde "compensa fazer?" */}
-      <section className="cartao grid grid-cols-3 divide-x divide-neutral-100">
+      <section className="cartao grid grid-cols-3 divide-x divide-neutral-100 dark:divide-neutral-800">
         <div className="p-3">
           <p className="text-xs uppercase tracking-wide text-neutral-500">
             Cobrado
@@ -146,16 +146,16 @@ export default async function CarroPage({
                   <button
                     className={`flex w-full items-center gap-2.5 rounded-md border px-3 py-2 text-left text-sm transition ${
                       ativo
-                        ? "border-neutral-900 bg-neutral-900 text-white"
-                        : "border-neutral-300 bg-white hover:bg-neutral-50"
+                        ? "border-neutral-900 bg-neutral-900 text-white dark:border-neutral-100 dark:bg-neutral-100 dark:text-neutral-900"
+                        : "border-neutral-300 bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800"
                     }`}
                   >
                     <span
                       aria-hidden
                       className={`grid h-4 w-4 shrink-0 place-items-center rounded border text-[10px] ${
                         ativo
-                          ? "border-white bg-white text-neutral-900"
-                          : "border-neutral-400"
+                          ? "border-white bg-white text-neutral-900 dark:border-neutral-900 dark:bg-neutral-900 dark:text-neutral-100"
+                          : "border-neutral-400 dark:border-neutral-600"
                       }`}
                     >
                       {ativo ? "✓" : ""}
@@ -163,7 +163,7 @@ export default async function CarroPage({
                     <span className="min-w-0 flex-1 truncate">{tipo.name}</span>
                     <span
                       className={`shrink-0 text-xs tabular-nums ${
-                        ativo ? "text-neutral-300" : "text-neutral-400"
+                        ativo ? "text-neutral-300 dark:text-neutral-600" : "text-neutral-400"
                       }`}
                     >
                       {money(tipo.totalCost)}
@@ -194,11 +194,11 @@ export default async function CarroPage({
           </p>
         ) : (
           <>
-            <ul className="mt-3 divide-y divide-neutral-100 text-sm">
+            <ul className="mt-3 divide-y divide-neutral-100 text-sm dark:divide-neutral-800">
               {previstos.map((item) => (
                 <li key={item.id} className="flex items-center gap-3 py-2">
                   <span className="min-w-0 flex-1 truncate">{item.name}</span>
-                  <span className="shrink-0 tabular-nums text-neutral-600">
+                  <span className="shrink-0 tabular-nums text-neutral-600 dark:text-neutral-400">
                     {fmtQty(item.qty)} {item.unit}
                   </span>
                   <span className="w-20 shrink-0 text-right tabular-nums text-neutral-400">
@@ -229,7 +229,7 @@ export default async function CarroPage({
             <h2 className="text-sm font-medium">Material lançado nesse carro</h2>
             <span className="text-xs text-neutral-500">{money(custoReal)}</span>
           </div>
-          <ul className="mt-3 divide-y divide-neutral-100 text-sm">
+          <ul className="mt-3 divide-y divide-neutral-100 text-sm dark:divide-neutral-800">
             {movimentos.map((m) => (
               <li key={m.id} className="flex items-center gap-3 py-2">
                 <span className="min-w-0 flex-1 truncate">
@@ -238,7 +238,7 @@ export default async function CarroPage({
                     <span className="text-neutral-400"> · {m.note}</span>
                   )}
                 </span>
-                <span className="shrink-0 tabular-nums text-neutral-600">
+                <span className="shrink-0 tabular-nums text-neutral-600 dark:text-neutral-400">
                   {fmtQty(m.qty)} {m.unit}
                 </span>
                 <span className="w-20 shrink-0 text-right tabular-nums text-neutral-400">
@@ -252,7 +252,7 @@ export default async function CarroPage({
 
       {/* Cadastro */}
       <details className="cartao p-4">
-        <summary className="cursor-pointer text-sm font-medium">
+        <summary className="cursor-pointer text-sm font-medium dark:text-neutral-200">
           Editar dados do carro
         </summary>
         <form

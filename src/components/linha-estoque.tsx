@@ -19,8 +19,8 @@ export function LinhaEstoque({
   const abaixo = produto.balance <= produto.minStock;
 
   return (
-    <details className="group border-b border-neutral-200 last:border-0">
-      <summary className="flex cursor-pointer list-none items-center gap-3 px-3 py-2.5 hover:bg-neutral-50">
+    <details className="group border-b border-neutral-200 last:border-0 dark:border-neutral-800">
+      <summary className="flex cursor-pointer list-none items-center gap-3 px-3 py-2.5 hover:bg-neutral-50 dark:hover:bg-neutral-900">
         {abaixo ? (
           <span
             title={zerado ? "Acabou" : "Abaixo do mínimo"}
@@ -33,7 +33,7 @@ export function LinhaEstoque({
         ) : (
           <span
             aria-hidden
-            className="h-2 w-2 shrink-0 rounded-full bg-neutral-200"
+            className="h-2 w-2 shrink-0 rounded-full bg-neutral-200 dark:bg-neutral-700"
           />
         )}
         <span className="min-w-0 flex-1">
@@ -58,12 +58,71 @@ export function LinhaEstoque({
             mín {fmtQty(produto.minStock)} · {money(produto.cost)}
           </span>
         </span>
-        <span className="shrink-0 text-neutral-300 transition group-open:rotate-180">
+        <span className="shrink-0 text-neutral-300 transition group-open:rotate-180 dark:text-neutral-600">
           ▾
         </span>
       </summary>
 
-      <div className="space-y-4 border-t border-neutral-100 bg-neutral-50 px-3 py-3">
+      <div className="space-y-4 border-t border-neutral-100 bg-neutral-50 px-3 py-3 dark:border-neutral-800 dark:bg-neutral-950">
+        {/* Editar cadastro — inclusive o estoque mínimo. Fica logo no topo,
+            visível, porque é uma das coisas mais importantes de configurar
+            e ficava escondida demais lá embaixo. */}
+        <details className="cartao text-sm">
+          <summary className="cursor-pointer list-none px-3 py-2 font-medium text-neutral-700 marker:content-none hover:text-black dark:text-neutral-200 dark:hover:text-white">
+            ✎ Editar nome, preço e estoque mínimo
+          </summary>
+          <form
+            action={editarProduto}
+            className="grid gap-2 border-t border-neutral-100 p-3 sm:grid-cols-2 dark:border-neutral-800"
+          >
+            <input type="hidden" name="id" value={produto.id} />
+            <div className="sm:col-span-2">
+              <label className="rotulo">Nome</label>
+              <input name="name" defaultValue={produto.name} className="campo" required />
+            </div>
+            <div>
+              <label className="rotulo">Unidade</label>
+              <input name="unit" defaultValue={produto.unit} className="campo" />
+            </div>
+            <div>
+              <label className="rotulo">Categoria</label>
+              <input
+                name="category"
+                defaultValue={produto.category ?? ""}
+                className="campo"
+              />
+            </div>
+            <div>
+              <label className="rotulo">Preço unitário</label>
+              <input
+                name="cost"
+                inputMode="decimal"
+                defaultValue={produto.cost}
+                className="campo"
+              />
+            </div>
+            <div>
+              <label className="rotulo">Estoque mínimo</label>
+              <input
+                name="minStock"
+                inputMode="decimal"
+                defaultValue={produto.minStock}
+                className="campo"
+              />
+            </div>
+            <div className="flex gap-2 sm:col-span-2">
+              <button className="botao">Salvar</button>
+            </div>
+          </form>
+
+          <form action={arquivarProduto} className="border-t border-neutral-100 p-3 dark:border-neutral-800">
+            <input type="hidden" name="id" value={produto.id} />
+            <button className="text-xs text-neutral-400 hover:text-red-600">
+              arquivar insumo
+            </button>
+          </form>
+        </details>
+
         <div className="grid gap-3 sm:grid-cols-2">
           {/* Entrada */}
           <form action={movimentar} className="cartao space-y-2 p-3">
@@ -123,63 +182,6 @@ export function LinhaEstoque({
             <button className="botao-claro w-full">Lançar saída</button>
           </form>
         </div>
-
-        {/* Editar cadastro */}
-        <details className="text-sm">
-          <summary className="cursor-pointer text-xs text-neutral-500 hover:text-neutral-800">
-            editar cadastro
-          </summary>
-          <form
-            action={editarProduto}
-            className="mt-2 grid gap-2 sm:grid-cols-2"
-          >
-            <input type="hidden" name="id" value={produto.id} />
-            <div className="sm:col-span-2">
-              <label className="rotulo">Nome</label>
-              <input name="name" defaultValue={produto.name} className="campo" required />
-            </div>
-            <div>
-              <label className="rotulo">Unidade</label>
-              <input name="unit" defaultValue={produto.unit} className="campo" />
-            </div>
-            <div>
-              <label className="rotulo">Categoria</label>
-              <input
-                name="category"
-                defaultValue={produto.category ?? ""}
-                className="campo"
-              />
-            </div>
-            <div>
-              <label className="rotulo">Preço unitário</label>
-              <input
-                name="cost"
-                inputMode="decimal"
-                defaultValue={produto.cost}
-                className="campo"
-              />
-            </div>
-            <div>
-              <label className="rotulo">Estoque mínimo</label>
-              <input
-                name="minStock"
-                inputMode="decimal"
-                defaultValue={produto.minStock}
-                className="campo"
-              />
-            </div>
-            <div className="flex gap-2 sm:col-span-2">
-              <button className="botao">Salvar</button>
-            </div>
-          </form>
-
-          <form action={arquivarProduto} className="mt-2">
-            <input type="hidden" name="id" value={produto.id} />
-            <button className="text-xs text-neutral-400 hover:text-red-600">
-              arquivar insumo
-            </button>
-          </form>
-        </details>
       </div>
     </details>
   );

@@ -25,7 +25,7 @@ function CartaoCarro({ carro }: { carro: VehicleRow }) {
   return (
     <Link
       href={`/carros/${carro.id}`}
-      className="block p-3 transition hover:bg-neutral-50"
+      className="block p-3 transition hover:bg-neutral-50 dark:hover:bg-neutral-900"
     >
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
@@ -100,7 +100,7 @@ export default async function CarrosPage() {
             {money(material)} de material ={" "}
             <span
               className={`font-semibold ${
-                receita - material < 0 ? "text-red-600" : "text-neutral-800"
+                receita - material < 0 ? "text-red-600" : "text-neutral-800 dark:text-neutral-200"
               }`}
             >
               {money(receita - material)}
@@ -110,7 +110,7 @@ export default async function CarrosPage() {
       </div>
 
       <details className="cartao p-4">
-        <summary className="cursor-pointer text-sm font-medium">
+        <summary className="cursor-pointer text-sm font-medium dark:text-neutral-200">
           + Novo carro
         </summary>
         <form action={criarVeiculo} className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -165,10 +165,10 @@ export default async function CarrosPage() {
 
       {grupos.map((grupo) => (
         <section key={grupo.chave}>
-          <h2 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+          <h2 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
             {rotuloStatus[grupo.chave]} ({grupo.itens.length})
           </h2>
-          <div className="cartao divide-y divide-neutral-100">
+          <div className="cartao divide-y divide-neutral-100 dark:divide-neutral-800">
             {grupo.itens.map((carro) => (
               <CartaoCarro key={carro.id} carro={carro} />
             ))}

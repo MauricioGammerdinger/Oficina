@@ -67,15 +67,15 @@ export default async function RelatoriosPage() {
               <span className="w-12 shrink-0 text-xs text-neutral-500">
                 {m.rotulo}
               </span>
-              <div className="h-4 flex-1 rounded bg-neutral-100">
+              <div className="h-4 flex-1 rounded bg-neutral-100 dark:bg-neutral-800">
                 <div
-                  className="h-4 rounded bg-neutral-800"
+                  className="h-4 rounded bg-neutral-800 dark:bg-neutral-200"
                   style={{
                     width: `${Math.max((m.total / maiorGasto) * 100, m.total > 0 ? 3 : 0)}%`,
                   }}
                 />
               </div>
-              <span className="w-20 shrink-0 text-right text-xs tabular-nums text-neutral-600">
+              <span className="w-20 shrink-0 text-right text-xs tabular-nums text-neutral-600 dark:text-neutral-400">
                 {money(m.total)}
               </span>
             </div>
@@ -106,13 +106,13 @@ export default async function RelatoriosPage() {
               return (
                 <div key={p.productId}>
                   <p className="text-sm font-medium">{p.name}</p>
-                  <div className="mt-1 divide-y divide-neutral-100 rounded-md border border-neutral-100">
+                  <div className="mt-1 divide-y divide-neutral-100 rounded-md border border-neutral-100 dark:divide-neutral-800 dark:border-neutral-800">
                     {p.fornecedores.map((f) => (
                       <div
                         key={f.fornecedor}
                         className="flex items-center justify-between gap-3 px-3 py-1.5 text-sm"
                       >
-                        <span className="min-w-0 truncate text-neutral-700">
+                        <span className="min-w-0 truncate text-neutral-700 dark:text-neutral-300">
                           {f.fornecedor}
                           <span className="ml-1.5 text-xs text-neutral-400">
                             {f.vezes > 1 ? `· ${f.vezes}x` : ""}
@@ -121,7 +121,7 @@ export default async function RelatoriosPage() {
                         <span
                           className={`shrink-0 tabular-nums ${
                             f.ultimoPreco === maisBarato
-                              ? "font-semibold text-green-700"
+                              ? "font-semibold text-green-700 dark:text-green-500"
                               : "text-neutral-500"
                           }`}
                         >
@@ -153,16 +153,16 @@ export default async function RelatoriosPage() {
           <div className="mt-3 space-y-2">
             {topConsumo.map((c) => (
               <div key={c.name} className="flex items-center gap-3">
-                <span className="w-32 shrink-0 truncate text-xs text-neutral-600" title={c.name}>
+                <span className="w-32 shrink-0 truncate text-xs text-neutral-600 dark:text-neutral-400" title={c.name}>
                   {c.name}
                 </span>
-                <div className="h-4 flex-1 rounded bg-neutral-100">
+                <div className="h-4 flex-1 rounded bg-neutral-100 dark:bg-neutral-800">
                   <div
-                    className="h-4 rounded bg-neutral-800"
+                    className="h-4 rounded bg-neutral-800 dark:bg-neutral-200"
                     style={{ width: `${(c.valor / maiorConsumo) * 100}%` }}
                   />
                 </div>
-                <span className="w-28 shrink-0 text-right text-xs tabular-nums text-neutral-600">
+                <span className="w-28 shrink-0 text-right text-xs tabular-nums text-neutral-600 dark:text-neutral-400">
                   {qty(c.qty)} {c.unit} · {money(c.valor)}
                 </span>
               </div>

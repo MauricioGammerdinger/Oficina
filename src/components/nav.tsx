@@ -26,15 +26,17 @@ export function Nav({ alertas }: { alertas: number }) {
             href={link.href}
             className={`shrink-0 rounded-md px-3 py-1.5 text-sm font-medium transition ${
               ativo
-                ? "bg-neutral-900 text-white"
-                : "text-neutral-600 hover:bg-neutral-200"
+                ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
+                : "text-neutral-600 hover:bg-neutral-200 dark:text-neutral-400 dark:hover:bg-neutral-800"
             }`}
           >
             {link.label}
             {link.href === "/comprar" && alertas > 0 && (
               <span
                 className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs font-semibold ${
-                  ativo ? "bg-white text-neutral-900" : "bg-red-600 text-white"
+                  ativo
+                    ? "bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100"
+                    : "bg-red-600 text-white"
                 }`}
               >
                 {alertas}

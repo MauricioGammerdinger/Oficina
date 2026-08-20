@@ -1,4 +1,5 @@
 import { sair } from "@/app/actions";
+import { AlternarTema } from "@/components/alternar-tema";
 import { Nav } from "@/components/nav";
 import { getShoppingList } from "@/lib/queries";
 
@@ -19,11 +20,14 @@ export default async function AppLayout({
     <div className="mx-auto max-w-5xl px-4 pb-24 pt-4 sm:px-6">
       <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <Nav alertas={compras.length} />
-        <form action={sair}>
-          <button className="text-xs text-neutral-400 hover:text-neutral-700">
-            sair
-          </button>
-        </form>
+        <div className="flex items-center gap-3">
+          <AlternarTema />
+          <form action={sair}>
+            <button className="text-xs text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-200">
+              sair
+            </button>
+          </form>
+        </div>
       </header>
       {children}
     </div>
