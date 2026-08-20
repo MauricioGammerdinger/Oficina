@@ -67,9 +67,9 @@ export default async function RelatoriosPage() {
               <span className="w-12 shrink-0 text-xs text-neutral-500">
                 {m.rotulo}
               </span>
-              <div className="h-4 flex-1 rounded bg-neutral-100 dark:bg-neutral-800">
+              <div className="h-4 flex-1 rounded-full bg-neutral-100 dark:bg-neutral-800">
                 <div
-                  className="h-4 rounded bg-neutral-800 dark:bg-neutral-200"
+                  className="h-4 rounded-full bg-neutral-800 dark:bg-neutral-200"
                   style={{
                     width: `${Math.max((m.total / maiorGasto) * 100, m.total > 0 ? 3 : 0)}%`,
                   }}
@@ -106,7 +106,7 @@ export default async function RelatoriosPage() {
               return (
                 <div key={p.productId}>
                   <p className="text-sm font-medium">{p.name}</p>
-                  <div className="mt-1 divide-y divide-neutral-100 rounded-md border border-neutral-100 dark:divide-neutral-800 dark:border-neutral-800">
+                  <div className="mt-1 divide-y divide-neutral-100 rounded-xl border border-neutral-100 dark:divide-neutral-800 dark:border-neutral-800">
                     {p.fornecedores.map((f) => (
                       <div
                         key={f.fornecedor}
@@ -156,9 +156,9 @@ export default async function RelatoriosPage() {
                 <span className="w-32 shrink-0 truncate text-xs text-neutral-600 dark:text-neutral-400" title={c.name}>
                   {c.name}
                 </span>
-                <div className="h-4 flex-1 rounded bg-neutral-100 dark:bg-neutral-800">
+                <div className="h-4 flex-1 rounded-full bg-neutral-100 dark:bg-neutral-800">
                   <div
-                    className="h-4 rounded bg-neutral-800 dark:bg-neutral-200"
+                    className="h-4 rounded-full bg-neutral-800 dark:bg-neutral-200"
                     style={{ width: `${(c.valor / maiorConsumo) * 100}%` }}
                   />
                 </div>

@@ -144,7 +144,7 @@ export default async function CarroPage({
                   <input type="hidden" name="vehicleId" value={carro.id} />
                   <input type="hidden" name="serviceTypeId" value={tipo.id} />
                   <button
-                    className={`flex w-full items-center gap-2.5 rounded-md border px-3 py-2 text-left text-sm transition ${
+                    className={`flex w-full items-center gap-2.5 rounded-xl border px-3 py-2 text-left text-sm transition ${
                       ativo
                         ? "border-neutral-900 bg-neutral-900 text-white dark:border-neutral-100 dark:bg-neutral-100 dark:text-neutral-900"
                         : "border-neutral-300 bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800"

@@ -13,8 +13,11 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* Fundo bege quentinho, tipo papel — o branco puro deixava tudo com cara
+   de planilha. Os cartões continuam brancos por cima, então o contraste
+   ajuda a destacar o conteúdo. */
 body {
-  background: #f6f6f4;
+  background: #f2ece1;
   color: #1a1a19;
   font-family: var(--font-sans);
 }
@@ -27,7 +30,7 @@ body {
 /* Campos com tamanho confortável no celular sem o iOS dar zoom no foco. */
 @layer components {
   .campo {
-    @apply w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-base
+    @apply w-full rounded-xl border border-neutral-300 bg-white px-3 py-2 text-base
            text-neutral-900 outline-none placeholder:text-neutral-400
            focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900
            dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100
@@ -41,14 +44,14 @@ body {
   }
 
   .botao {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-md bg-neutral-900
+    @apply inline-flex items-center justify-center gap-1.5 rounded-xl bg-neutral-900
            px-3.5 py-2 text-sm font-medium text-white transition
            hover:bg-neutral-700 active:bg-neutral-800 disabled:opacity-40
            dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-300;
   }
 
   .botao-claro {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-md border
+    @apply inline-flex items-center justify-center gap-1.5 rounded-xl border
            border-neutral-300 bg-white px-3.5 py-2 text-sm font-medium text-neutral-800
            transition hover:bg-neutral-100
            dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100
@@ -56,7 +59,7 @@ body {
   }
 
   .cartao {
-    @apply rounded-lg border border-neutral-200 bg-white
+    @apply rounded-2xl border border-neutral-200 bg-white
            dark:border-neutral-800 dark:bg-neutral-900;
   }
 }
