@@ -80,38 +80,50 @@ export default async function ServicosPage() {
                 Sem insumos na receita — esse serviço vai contar como custo zero.
               </p>
             ) : (
-              <ul className="mt-3 divide-y divide-neutral-100 text-sm dark:divide-neutral-800">
-                {tipo.items.map((item) => (
-                  <li key={item.id} className="flex items-center gap-2 py-2">
-                    <span className="min-w-0 flex-1 truncate">
-                      {item.productName}
-                    </span>
-                    <form
-                      action={salvarReceitaItem}
-                      className="flex shrink-0 items-center gap-1.5"
-                    >
-                      <input type="hidden" name="serviceTypeId" value={tipo.id} />
-                      <input type="hidden" name="productId" value={item.productId} />
-                      <input
-                        name="qty"
-                        inputMode="decimal"
-                        defaultValue={item.qty}
-                        className="campo max-w-20 py-1 text-sm"
-                        aria-label={`Quantidade de ${item.productName}`}
-                      />
-                      <span className="w-8 text-xs text-neutral-400">
-                        {item.unit}
+              <>
+                {/* Cabeçalho das colunas — sem isso os números pareciam
+                    soltos, sem dizer o que cada um significava. */}
+                <div className="mt-3 flex items-center gap-2 px-0.5 text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                  <span className="min-w-0 flex-1">Insumo</span>
+                  <span className="w-40 shrink-0">Qtd. na receita</span>
+                  <span className="w-20 shrink-0 text-right">Custo</span>
+                </div>
+                <ul className="divide-y divide-neutral-100 text-sm dark:divide-neutral-800">
+                  {tipo.items.map((item) => (
+                    <li key={item.id} className="flex items-center gap-2 py-2">
+                      <span className="min-w-0 flex-1 truncate">
+                        {item.productName}
                       </span>
-                      <button className="botao-claro px-2 py-1 text-xs">
-                        ok
-                      </button>
-                    </form>
-                    <span className="w-20 shrink-0 text-right text-xs tabular-nums text-neutral-400">
-                      {money(item.qty * item.cost)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+                      <form
+                        action={salvarReceitaItem}
+                        className="flex w-40 shrink-0 items-center gap-1.5"
+                      >
+                        <input type="hidden" name="serviceTypeId" value={tipo.id} />
+                        <input type="hidden" name="productId" value={item.productId} />
+                        <input
+                          name="qty"
+                          inputMode="decimal"
+                          defaultValue={item.qty}
+                          className="campo min-w-0 flex-1 py-1 text-sm"
+                          aria-label={`Quantidade de ${item.productName}`}
+                        />
+                        <span className="shrink-0 text-xs text-neutral-400">
+                          {item.unit}
+                        </span>
+                        <button
+                          className="botao-claro shrink-0 px-2 py-1 text-xs"
+                          title="Salvar essa quantidade"
+                        >
+                          ok
+                        </button>
+                      </form>
+                      <span className="w-20 shrink-0 text-right text-xs tabular-nums text-neutral-400">
+                        {money(item.qty * item.cost)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </>
             )}
 
             {disponiveis.length > 0 && (

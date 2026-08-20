@@ -62,35 +62,55 @@ export default async function ComprarPage() {
                 </div>
               </div>
 
-              {/* Comprou? Lança a entrada aqui mesmo, sem sair da tela. */}
+              {/* Comprou? Lança a entrada aqui mesmo, sem sair da tela.
+                  Cada campo tem um rótulo visível — antes eram só números
+                  soltos (ex.: "1" e "78") e não dava pra saber qual era a
+                  quantidade e qual era o preço sem já conhecer a tela. */}
               <form
                 action={movimentar}
-                className="mt-2 flex flex-wrap items-center gap-2"
+                className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-[1fr_1fr_1.4fr_auto] sm:items-end"
               >
                 <input type="hidden" name="productId" value={item.id} />
                 <input type="hidden" name="kind" value="in" />
-                <input
-                  name="qty"
-                  inputMode="decimal"
-                  defaultValue={item.suggested || ""}
-                  className="campo max-w-24"
-                  aria-label={`Quantidade comprada de ${item.name}`}
-                  required
-                />
-                <input
-                  name="unitCost"
-                  inputMode="decimal"
-                  defaultValue={item.cost || ""}
-                  className="campo max-w-28"
-                  aria-label={`Preço unitário de ${item.name}`}
-                />
-                <input
-                  name="note"
-                  placeholder="Fornecedor"
-                  className="campo max-w-40 flex-1"
-                  aria-label={`Fornecedor de ${item.name}`}
-                />
-                <button className="botao">Comprei</button>
+                <div>
+                  <label className="rotulo" htmlFor={`qty-${item.id}`}>
+                    Quantidade
+                  </label>
+                  <input
+                    id={`qty-${item.id}`}
+                    name="qty"
+                    inputMode="decimal"
+                    defaultValue={item.suggested || ""}
+                    className="campo"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="rotulo" htmlFor={`cost-${item.id}`}>
+                    Preço unit.
+                  </label>
+                  <input
+                    id={`cost-${item.id}`}
+                    name="unitCost"
+                    inputMode="decimal"
+                    defaultValue={item.cost || ""}
+                    className="campo"
+                  />
+                </div>
+                <div className="col-span-2 sm:col-span-1">
+                  <label className="rotulo" htmlFor={`note-${item.id}`}>
+                    Fornecedor
+                  </label>
+                  <input
+                    id={`note-${item.id}`}
+                    name="note"
+                    placeholder="Opcional"
+                    className="campo"
+                  />
+                </div>
+                <button className="botao col-span-2 sm:col-span-1">
+                  Comprei
+                </button>
               </form>
             </div>
           ))}
