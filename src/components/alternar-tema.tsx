@@ -29,10 +29,10 @@ export function AlternarTema() {
       type="button"
       onClick={alternar}
       suppressHydrationWarning
-      className="text-xs text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-200"
+      className="flex w-full items-center justify-center gap-2 rounded-md border border-neutral-200 px-3 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800"
       title={escuro ? "Mudar para modo claro" : "Mudar para modo escuro"}
     >
-      {escuro ? "☀ claro" : "☾ escuro"}
+      {escuro ? "☀ Modo claro" : "☾ Modo escuro"}
     </button>
   );
 }
