@@ -1,8 +1,0 @@
-{
-  "crons": [
-    {
-      "path": "/api/alerta-diario",
-      "schedule": "0 12 * * *"
-    }
-  ]
-}
