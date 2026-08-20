@@ -68,7 +68,9 @@ await bloco
   .fill("41,50");
 await bloco.locator('button:has-text("Lançar entrada")').click();
 await page.waitForTimeout(1500);
-await page.reload();
+// goto (não reload): reload reenviaria o POST se o clique tiver caído antes
+// da hidratação terminar, contando a entrada em dobro.
+await page.goto(`${base}/estoque`);
 const depois = await page
   .locator("summary", { hasText: "Massa poliéster 900g" })
   .innerText();
@@ -82,6 +84,15 @@ await page.goto(`${base}/estoque?q=pigmento`);
 const qtdLinhas = await page.locator("section.cartao > details").count();
 if (qtdLinhas === 2) ok("busca filtra (2 pigmentos)");
 else bad(`busca retornou ${qtdLinhas} linhas, esperado 2`);
+
+// --- ícone de alerta no estoque, pro item no mínimo
+await page.goto(`${base}/estoque`);
+const linhaAlerta = page.locator("summary", {
+  hasText: "Catalisador para primer",
+});
+if (/⚠/.test(await linhaAlerta.innerText()))
+  ok("ícone de alerta aparece no insumo no mínimo");
+else bad("ícone de alerta não apareceu no insumo no mínimo");
 
 // --- comprar
 await page.goto(`${base}/comprar`);
@@ -197,25 +208,6 @@ const sistemaAgora = await page
 if (/(^|\D)3(\D|$)/.test(sistemaAgora))
   ok("ajuste da contagem acertou o saldo (9,5 -> 3)");
 else bad(`saldo após ajuste: ${sistemaAgora.replace(/\n/g, " | ")}`);
-
-// --- configurações do alerta de e-mail
-await page.goto(`${base}/configuracoes`);
-await page.fill('input[name="email"]', "teste-smoke@exemplo.com");
-await page.check('input[name="enabled"]');
-await Promise.all([page.waitForNavigation(), page.click("text=Salvar")]);
-const emailSalvo = await page.inputValue('input[name="email"]');
-if (emailSalvo === "teste-smoke@exemplo.com")
-  ok("configuração do alerta salva e volta preenchida");
-else bad(`e-mail do alerta não persistiu: ${emailSalvo}`);
-
-await page.click("text=Testar agora");
-await page.waitForSelector('[role="status"]', { timeout: 15000 });
-const resultadoTeste = await page.textContent('[role="status"]');
-// Sem RESEND_API_KEY configurada no ambiente de teste, o esperado é a
-// mensagem de configuração pendente — não um erro de JS ou travamento.
-if (resultadoTeste && /Não enviou|enviado/.test(resultadoTeste))
-  ok("botão 'testar agora' responde");
-else bad(`botão de teste não respondeu como esperado: ${resultadoTeste}`);
 
 // --- relatórios
 await page.goto(`${base}/relatorios`);

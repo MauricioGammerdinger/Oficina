@@ -22,6 +22,13 @@
       "when": 1787182747127,
       "tag": "0002_tan_archangel",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787185603300,
+      "tag": "0003_productive_energizer",
+      "breakpoints": true
     }
   ]
 }

@@ -10,7 +10,6 @@ const links = [
   { href: "/contagem", label: "Contagem" },
   { href: "/servicos", label: "Serviços" },
   { href: "/relatorios", label: "Relatórios" },
-  { href: "/configuracoes", label: "Config" },
 ];
 
 export function Nav({ alertas }: { alertas: number }) {

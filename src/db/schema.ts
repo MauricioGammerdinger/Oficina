@@ -133,19 +133,6 @@ export const counts = pgTable("counts", {
   closedAt: timestamp("closed_at", { withTimezone: true }),
 });
 
-/**
- * Configurações de uso único (não por usuário — o sistema é de uma pessoa
- * só). Chave/valor simples para caber futuras configurações sem migração
- * nova a cada uma.
- */
-export const appSettings = pgTable("app_settings", {
-  key: text("key").primaryKey(),
-  value: text("value"),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
-
 export const countItems = pgTable(
   "count_items",
   {

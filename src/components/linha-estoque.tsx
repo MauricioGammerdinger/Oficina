@@ -21,12 +21,21 @@ export function LinhaEstoque({
   return (
     <details className="group border-b border-neutral-200 last:border-0">
       <summary className="flex cursor-pointer list-none items-center gap-3 px-3 py-2.5 hover:bg-neutral-50">
-        <span
-          aria-hidden
-          className={`h-2 w-2 shrink-0 rounded-full ${
-            zerado ? "bg-red-600" : abaixo ? "bg-amber-500" : "bg-neutral-200"
-          }`}
-        />
+        {abaixo ? (
+          <span
+            title={zerado ? "Acabou" : "Abaixo do mínimo"}
+            className={`shrink-0 text-sm ${
+              zerado ? "text-red-600" : "text-amber-500"
+            }`}
+          >
+            ⚠
+          </span>
+        ) : (
+          <span
+            aria-hidden
+            className="h-2 w-2 shrink-0 rounded-full bg-neutral-200"
+          />
+        )}
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-medium">
             {produto.name}

@@ -20,16 +20,20 @@ responde na hora se o serviço compensa.
 | **Contagem**  | Inventário físico. Ao fechar, acerta o saldo do sistema e mostra o quanto sumiu.          |
 | **Serviços**  | A receita de cada tipo de serviço: quanto de cada insumo ele consome.                     |
 | **Relatórios**| Faturado, material gasto e margem (carros concluídos), gasto em compras por mês, preço por fornecedor, insumos que mais saíram e perda encontrada nas contagens. |
-| **Config**    | E-mail que recebe o alerta diário de compras, liga/desliga o alerta, botão de testar.     |
 
-### Alerta de compras por e-mail
+### Alerta de compra direto no site
 
-Uma vez por dia (tarefa agendada da Vercel) o sistema confere a lista de
-compras e, se tiver algo no mínimo, manda um e-mail. O e-mail de destino e se
-o alerta está ligado ficam guardados no banco e são configurados na tela
-**Config** — cada pessoa que usa o sistema aponta o próprio e-mail ali, sem
-mexer em variável de ambiente nenhuma. Veja "Publicando de graça" abaixo para
-o que precisa ser configurado uma vez no servidor (a chave do Resend).
+Não tem e-mail nem notificação externa — o alerta é visual, dentro do
+próprio site, pra ficar simples. Cada insumo tem um estoque mínimo (tela
+Estoque). Quando o saldo cai nele ou abaixo:
+
+- aparece um ícone de alerta (⚠) do lado do nome do insumo, na lista de
+  Estoque;
+- o insumo entra na lista da tela **Comprar**, com quanto comprar e o custo
+  estimado;
+- o menu mostra um contador vermelho ao lado de "Comprar" com quantos itens
+  estão precisando de reposição — dá pra ver isso assim que abre o site, sem
+  precisar entrar em nenhuma tela.
 
 ### Comparar preço entre fornecedores
 
@@ -85,10 +89,6 @@ APP_PASSWORD=a-senha-de-acesso
 AUTH_SECRET=string-longa-aleatoria     # openssl rand -hex 32
 ```
 
-As variáveis do alerta por e-mail (`RESEND_API_KEY`, `ALERT_EMAIL_FROM`,
-`CRON_SECRET`) são opcionais em dev — sem elas o alerta simplesmente avisa que
-falta configuração, sem quebrar nada. Veja `.env.example`.
-
 Comandos úteis:
 
 ```bash
@@ -123,23 +123,7 @@ DATABASE_URL="a-string-do-neon" npm run db:migrate
 Pronto. A mesma URL abre no computador e no celular — é uma aplicação
 responsiva, não precisa instalar app nenhum.
 
-**3. Alerta por e-mail (opcional) — [Resend](https://resend.com)**
-
-Crie uma conta gratuita, gere uma API key em *API Keys*, e adicione na Vercel:
-
-```
-RESEND_API_KEY=a-chave-do-resend
-CRON_SECRET=string-longa-aleatoria     # openssl rand -hex 32, protege a rota do alerta
-```
-
-`ALERT_EMAIL_FROM` é opcional — sem preencher, usa o remetente padrão do
-Resend (`onboarding@resend.dev`), que não exige verificar domínio. O e-mail
-de destino não vai aqui: cada pessoa configura o próprio na tela **Config**
-dentro do site, com um botão para testar na hora. A tarefa agendada
-(`vercel.json`) roda uma vez por dia — no free tier da Vercel não dá pra
-rodar mais de uma vez ao dia.
-
-**4. Ambiente separado para você testar (opcional, mas recomendado)**
+**3. Ambiente separado para você testar (opcional, mas recomendado)**
 
 Antes de mexer no que ela usa de verdade, vale ter um segundo ambiente só seu,
 com banco próprio, para testar sem risco:
