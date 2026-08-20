@@ -224,6 +224,10 @@ if (/carros conclu[ií]dos/i.test(relTxt) && /Gasto em compras por mês/.test(re
   ok("relatórios carrega resumo e gráfico de compras");
 else bad("relatórios não mostrou o esperado");
 
+if (/Preço por fornecedor/.test(relTxt))
+  ok("relatórios mostra o comparativo de fornecedores");
+else bad("comparativo de fornecedores não apareceu");
+
 // --- mobile
 const mob = await browser.newContext({
   viewport: { width: 390, height: 844 },

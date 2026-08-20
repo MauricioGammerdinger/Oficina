@@ -19,7 +19,7 @@ responde na hora se o serviço compensa.
 | **Carros**    | Carros da semana com valor cobrado, checklist de serviços e a conta cobrado − material = sobra. |
 | **Contagem**  | Inventário físico. Ao fechar, acerta o saldo do sistema e mostra o quanto sumiu.          |
 | **Serviços**  | A receita de cada tipo de serviço: quanto de cada insumo ele consome.                     |
-| **Relatórios**| Faturado, material gasto e margem (carros concluídos), gasto em compras por mês, insumos que mais saíram e perda encontrada nas contagens. |
+| **Relatórios**| Faturado, material gasto e margem (carros concluídos), gasto em compras por mês, preço por fornecedor, insumos que mais saíram e perda encontrada nas contagens. |
 | **Config**    | E-mail que recebe o alerta diário de compras, liga/desliga o alerta, botão de testar.     |
 
 ### Alerta de compras por e-mail
@@ -30,6 +30,14 @@ o alerta está ligado ficam guardados no banco e são configurados na tela
 **Config** — cada pessoa que usa o sistema aponta o próprio e-mail ali, sem
 mexer em variável de ambiente nenhuma. Veja "Publicando de graça" abaixo para
 o que precisa ser configurado uma vez no servidor (a chave do Resend).
+
+### Comparar preço entre fornecedores
+
+Na tela **Relatórios**, quando um insumo já foi comprado de mais de um lugar,
+aparece uma comparação de preço entre esses lugares — o mais barato fica
+destacado. Não existe cadastro de fornecedor separado: é só o campo "onde
+comprou" que já existe na entrada de estoque (tela Estoque). Quanto mais isso
+for preenchido nas compras do dia a dia, mais insumo aparece na comparação.
 
 ### Como as telas se conectam
 

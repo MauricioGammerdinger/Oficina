@@ -471,3 +471,68 @@ export async function getPerdaContagens() {
   const r = rows[0] ?? {};
   return { total: num(r.total), ultimos90: num(r.ultimos90) };
 }
+
+/**
+ * Compara o preço pago por insumo entre fornecedores diferentes — usa o
+ * "onde comprou" que já é digitado na entrada de estoque, sem cadastro novo
+ * de fornecedor. Só entra insumo que já foi comprado de mais de um lugar
+ * (com preço e fornecedor preenchidos); senão não tem o que comparar.
+ * Agrupa ignorando maiúsc./minúsc. e espaço, pra "Casa das Tintas" e "casa
+ * das tintas" não virarem duas linhas por causa de digitação diferente.
+ */
+export async function getComparativoFornecedores() {
+  const { rows } = await db.execute(sql`
+    select
+      p.id                                                     as "productId",
+      p.name,
+      p.unit,
+      (array_agg(trim(sm.note) order by sm.created_at desc))[1] as fornecedor,
+      (array_agg(sm.unit_cost order by sm.created_at desc))[1]  as "ultimoPreco",
+      (array_agg(sm.created_at order by sm.created_at desc))[1] as data,
+      count(*)                                                  as vezes
+    from stock_moves sm
+    join products p on p.id = sm.product_id
+    where sm.kind = 'in'
+      and sm.note is not null and trim(sm.note) <> ''
+      and lower(trim(sm.note)) <> 'saldo inicial'
+      and sm.unit_cost is not null and sm.unit_cost > 0
+    group by p.id, p.name, p.unit, lower(trim(sm.note))
+    order by p.name, "ultimoPreco" asc
+  `);
+
+  const porProduto = new Map<
+    number,
+    {
+      productId: number;
+      name: string;
+      unit: string;
+      fornecedores: {
+        fornecedor: string;
+        ultimoPreco: number;
+        data: string;
+        vezes: number;
+      }[];
+    }
+  >();
+
+  for (const r of rows) {
+    const productId = num(r.productId);
+    if (!porProduto.has(productId)) {
+      porProduto.set(productId, {
+        productId,
+        name: String(r.name),
+        unit: String(r.unit),
+        fornecedores: [],
+      });
+    }
+    porProduto.get(productId)!.fornecedores.push({
+      fornecedor: String(r.fornecedor),
+      ultimoPreco: num(r.ultimoPreco),
+      data: String(r.data),
+      vezes: num(r.vezes),
+    });
+  }
+
+  // Só interessa quando dá pra comparar — ou seja, mais de um fornecedor.
+  return [...porProduto.values()].filter((p) => p.fornecedores.length > 1);
+}

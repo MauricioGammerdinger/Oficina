@@ -1,5 +1,6 @@
 import { money, qty } from "@/lib/parse";
 import {
+  getComparativoFornecedores,
   getGastoComprasPorMes,
   getPerdaContagens,
   getResumoNegocio,
@@ -8,12 +9,16 @@ import {
 
 export const dynamic = "force-dynamic";
 
+const dataCurta = (iso: string) =>
+  new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+
 export default async function RelatoriosPage() {
-  const [resumo, gastoPorMes, topConsumo, perda] = await Promise.all([
+  const [resumo, gastoPorMes, topConsumo, perda, fornecedores] = await Promise.all([
     getResumoNegocio(),
     getGastoComprasPorMes(6),
     getTopConsumo(30, 6),
     getPerdaContagens(),
+    getComparativoFornecedores(),
   ]);
 
   const maiorGasto = Math.max(1, ...gastoPorMes.map((m) => m.total));
@@ -76,6 +81,63 @@ export default async function RelatoriosPage() {
             </div>
           ))}
         </div>
+      </section>
+
+      {/* --- comparativo de fornecedores --- */}
+      <section className="cartao p-4">
+        <h2 className="text-sm font-semibold">Preço por fornecedor</h2>
+        <p className="mt-1 text-sm text-neutral-500">
+          Compara o preço pago no mesmo insumo quando ele já foi comprado de
+          mais de um lugar. Vem do &quot;onde comprou&quot; preenchido na
+          entrada de estoque — quanto mais isso for preenchido, mais insumo
+          aparece aqui.
+        </p>
+        {fornecedores.length === 0 ? (
+          <p className="mt-3 text-sm text-neutral-500">
+            Nenhum insumo foi comprado de mais de um fornecedor ainda (com
+            preço e &quot;onde comprou&quot; preenchidos na entrada).
+          </p>
+        ) : (
+          <div className="mt-3 space-y-4">
+            {fornecedores.map((p) => {
+              const maisBarato = Math.min(
+                ...p.fornecedores.map((f) => f.ultimoPreco)
+              );
+              return (
+                <div key={p.productId}>
+                  <p className="text-sm font-medium">{p.name}</p>
+                  <div className="mt-1 divide-y divide-neutral-100 rounded-md border border-neutral-100">
+                    {p.fornecedores.map((f) => (
+                      <div
+                        key={f.fornecedor}
+                        className="flex items-center justify-between gap-3 px-3 py-1.5 text-sm"
+                      >
+                        <span className="min-w-0 truncate text-neutral-700">
+                          {f.fornecedor}
+                          <span className="ml-1.5 text-xs text-neutral-400">
+                            {f.vezes > 1 ? `· ${f.vezes}x` : ""}
+                          </span>
+                        </span>
+                        <span
+                          className={`shrink-0 tabular-nums ${
+                            f.ultimoPreco === maisBarato
+                              ? "font-semibold text-green-700"
+                              : "text-neutral-500"
+                          }`}
+                        >
+                          {money(f.ultimoPreco)}/{p.unit}
+                          <span className="ml-1.5 text-xs text-neutral-400">
+                            {dataCurta(f.data)}
+                          </span>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* --- top consumo --- */}
