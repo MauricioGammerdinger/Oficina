@@ -13,11 +13,12 @@ export const viewport: Viewport = {
 };
 
 // Aplica o tema salvo antes da página pintar, pra não dar aquele flash de
-// tela clara e depois escura. Roda antes de qualquer coisa do React.
+// tela escura e depois clara. Roda antes de qualquer coisa do React.
+// Padrão é sempre claro — só fica escuro se ela mesma escolheu isso antes
+// (não segue a preferência do celular/PC).
 const scriptTema = `
   try {
-    var tema = localStorage.getItem("tema");
-    var escuro = tema ? tema === "escuro" : matchMedia("(prefers-color-scheme: dark)").matches;
+    var escuro = localStorage.getItem("tema") === "escuro";
     document.documentElement.classList.toggle("dark", escuro);
   } catch (e) {}
 `;

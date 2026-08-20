@@ -240,7 +240,9 @@ else bad("página vaza na horizontal no celular");
 
 // --- logout
 await page.goto(`${base}/estoque`);
-await page.locator("header").getByRole("button", { name: "sair" }).click();
+// "sair" mora na barra lateral em telas largas e no cabeçalho no celular —
+// não fixa em um container só, pra não quebrar quando o layout mudar de novo.
+await page.getByRole("button", { name: "sair" }).click();
 await page.waitForURL("**/entrar", { timeout: 15000 });
 ok("logout funciona");
 
