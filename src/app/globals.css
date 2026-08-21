@@ -73,16 +73,47 @@ body {
   }
 }
 
-/* Animações da tela de login/cadastro — puro CSS, sem JS, então funciona
-   mesmo antes da página terminar de "hidratar". Cada gota de tinta flutua
-   num ritmo levemente diferente pra não parecer tudo sincronizado/robótico. */
-@keyframes flutuar {
+/* Animações da tela de login/cadastro — puro CSS pra quem não mexe o
+   mouse (o carrinho fica "ligado no ponto morto"). Quem mexe o mouse soma
+   por cima um efeito de perseguir o cursor, feito em JS (ver
+   ilustracao-oficina.tsx) que só troca variáveis CSS — sem re-renderizar
+   nada em React a cada movimento do mouse. */
+
+/* Carrinho ligado no ponto morto: balanço bem sutil da suspensão — leve
+   de propósito, pra não brigar com o movimento de perseguir o mouse. */
+@keyframes suspensao {
   0%,
   100% {
     transform: translateY(0) rotate(0deg);
   }
   50% {
-    transform: translateY(-14px) rotate(-4deg);
+    transform: translateY(-1.5px) rotate(0.3deg);
+  }
+}
+
+/* Sombra embaixo do carro "respira" junto com o balanço da suspensão. */
+@keyframes sombra-pulsa {
+  0%,
+  100% {
+    transform: scaleX(1);
+    opacity: 0.12;
+  }
+  50% {
+    transform: scaleX(0.9);
+    opacity: 0.08;
+  }
+}
+
+/* Brilho de "recém-pintado" piscando. */
+@keyframes brilho {
+  0%,
+  100% {
+    opacity: 0.15;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.15);
   }
 }
 
@@ -98,20 +129,66 @@ body {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .flutuar-1 {
-    animation: flutuar 5.5s ease-in-out infinite;
+  .suspensao {
+    animation: suspensao 2.2s ease-in-out infinite;
   }
-  .flutuar-2 {
-    animation: flutuar 4.5s ease-in-out infinite 0.4s;
+  .sombra-pulsa {
+    animation: sombra-pulsa 2.2s ease-in-out infinite;
   }
-  .flutuar-3 {
-    animation: flutuar 6.5s ease-in-out infinite 1.1s;
+  .brilho-1 {
+    animation: brilho 2.4s ease-in-out infinite;
   }
-  .flutuar-4 {
-    animation: flutuar 5s ease-in-out infinite 0.7s;
+  .brilho-2 {
+    animation: brilho 2.4s ease-in-out infinite 1.2s;
   }
 }
 
 .entrada-card {
   animation: entrada-card 0.5s ease-out both;
+}
+
+/* Carrinho "perseguindo" o cursor — as variáveis --mx/--my/--rot são
+   escritas via JS (mousemove) direto no elemento, sem passar pelo React,
+   pra não re-renderizar a página inteira a cada pixel que o mouse anda.
+   O -50%/-50% fixo centraliza o carro no meio do quadro; o restante do
+   translate é só o deslocamento do "perseguir o mouse" por cima disso. */
+.carro-parallax {
+  transform: translate(calc(-50% + var(--mx, 0px)), calc(-50% + var(--my, 0px)))
+    rotate(var(--rot, 0deg));
+  /* "back-out": desliza e assenta com uma leve "molinha" no final, em vez
+     de simplesmente parar seco — fica bem mais fluido/vivo. */
+  transition: transform 0.45s cubic-bezier(0.34, 1.35, 0.64, 1);
+}
+
+/* Pulinho de reação, tocado toda vez que a personalidade do carro muda
+   (a troca de "key" no React reinicia essa animação do zero). Bem mais
+   enérgico que o balanço sutil da suspensão, pra marcar a mudança. */
+@keyframes reagir {
+  0% {
+    transform: scale(1, 1) translateY(0);
+  }
+  30% {
+    transform: scale(1.08, 0.9) translateY(2px);
+  }
+  55% {
+    transform: scale(0.94, 1.1) translateY(-14px) rotate(-3deg);
+  }
+  75% {
+    transform: scale(1.04, 0.97) translateY(2px) rotate(2deg);
+  }
+  100% {
+    transform: scale(1, 1) translateY(0) rotate(0deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .reagir {
+    animation: reagir 0.6s cubic-bezier(0.34, 1.35, 0.64, 1) both;
+  }
+}
+
+/* Pupila dos olhinhos também acompanha o cursor, só que bem mais sutil. */
+.pupila-parallax {
+  transform: translate(var(--px, 0px), var(--py, 0px));
+  transition: transform 0.25s ease-out;
 }
