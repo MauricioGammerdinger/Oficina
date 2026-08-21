@@ -132,6 +132,15 @@ export default async function CarrosPage() {
             <input name="customer" className="campo" />
           </div>
           <div>
+            <label className="rotulo">Telefone do cliente</label>
+            <input
+              name="customerPhone"
+              type="tel"
+              placeholder="Ex.: (11) 91234-5678"
+              className="campo"
+            />
+          </div>
+          <div>
             <label className="rotulo">Data de entrada</label>
             <input name="entryDate" type="date" className="campo" />
           </div>

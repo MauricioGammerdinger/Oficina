@@ -27,6 +27,15 @@ body {
   color: #e8e8e6;
 }
 
+/* Impressão (ex.: lista de contagem) sempre em fundo branco puro, mesmo no
+   modo escuro — papel escuro gastaria tinta à toa. */
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+  }
+}
+
 /* Campos com tamanho confortável no celular sem o iOS dar zoom no foco. */
 @layer components {
   .campo {

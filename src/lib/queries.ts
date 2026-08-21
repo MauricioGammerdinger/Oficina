@@ -76,6 +76,7 @@ export type VehicleRow = {
   plate: string | null;
   model: string;
   customer: string | null;
+  customerPhone: string | null;
   entryDate: string | null;
   price: number;
   status: string;
@@ -92,6 +93,7 @@ export async function getVehicles(): Promise<VehicleRow[]> {
   const { rows } = await db.execute(sql`
     select
       v.id, v.plate, v.model, v.customer,
+      v.customer_phone as "customerPhone",
       v.entry_date     as "entryDate",
       v.price, v.status,
       v.photos_folder  as "photosFolder",
@@ -128,6 +130,8 @@ export async function getVehicles(): Promise<VehicleRow[]> {
     plate: r.plate === null ? null : String(r.plate),
     model: String(r.model),
     customer: r.customer === null ? null : String(r.customer),
+    customerPhone:
+      r.customerPhone === null ? null : String(r.customerPhone),
     entryDate: r.entryDate === null ? null : String(r.entryDate),
     price: num(r.price),
     status: String(r.status),

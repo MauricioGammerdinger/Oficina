@@ -64,6 +64,12 @@ export default async function CarroPage({
             </span>
           )}
         </h1>
+        {(carro.customer || carro.customerPhone) && (
+          <p className="mt-0.5 text-sm text-neutral-500">
+            {carro.customer || "Cliente sem nome"}
+            {carro.customerPhone && ` · ${carro.customerPhone}`}
+          </p>
+        )}
       </div>
 
       {/* Resumo da conta: é isso que responde "compensa fazer?" */}
@@ -273,6 +279,16 @@ export default async function CarroPage({
             <input
               name="customer"
               defaultValue={carro.customer ?? ""}
+              className="campo"
+            />
+          </div>
+          <div>
+            <label className="rotulo">Telefone do cliente</label>
+            <input
+              name="customerPhone"
+              type="tel"
+              defaultValue={carro.customerPhone ?? ""}
+              placeholder="Ex.: (11) 91234-5678"
               className="campo"
             />
           </div>

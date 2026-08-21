@@ -29,6 +29,13 @@
       "when": 1787185603300,
       "tag": "0003_productive_energizer",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787341834244,
+      "tag": "0004_hot_squadron_supreme",
+      "breakpoints": true
     }
   ]
 }

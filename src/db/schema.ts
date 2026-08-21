@@ -91,6 +91,7 @@ export const vehicles = pgTable("vehicles", {
   plate: text("plate"),
   model: text("model").notNull(),
   customer: text("customer"),
+  customerPhone: text("customer_phone"),
   entryDate: date("entry_date"),
   /** Valor cobrado pelo serviço */
   price: doublePrecision("price").notNull().default(0),
