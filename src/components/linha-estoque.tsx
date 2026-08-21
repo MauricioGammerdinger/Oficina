@@ -8,15 +8,25 @@ type Veiculo = { id: number; model: string; plate: string | null };
  * Uma linha do estoque. Usa <details> nativo: abre e fecha sem JavaScript,
  * então a página carrega rápido até num celular ruim.
  */
+type Lote = { qty: number; cost: number };
+
 export function LinhaEstoque({
   produto,
   veiculos,
+  lotes = [],
 }: {
   produto: ProductRow;
   veiculos: Veiculo[];
+  lotes?: Lote[];
 }) {
   const zerado = produto.balance <= 0;
   const abaixo = produto.balance <= produto.minStock;
+  // Só vale mostrar a quebra por lote quando tem mais de um preço diferente
+  // no estoque — com um preço só é igual ao preço de referência de sempre.
+  const lotesOrdenados = [...lotes]
+    .filter((l) => l.qty > 0.001)
+    .sort((a, b) => a.cost - b.cost);
+  const temMaisDeUmPreco = lotesOrdenados.length > 1;
 
   return (
     <details className="group border-b border-neutral-200 last:border-0 dark:border-neutral-800">
@@ -55,7 +65,10 @@ export function LinhaEstoque({
             {fmtQty(produto.balance)} {produto.unit}
           </span>
           <span className="block text-xs text-neutral-400 tabular-nums">
-            mín {fmtQty(produto.minStock)} · {money(produto.cost)}
+            mín {fmtQty(produto.minStock)} ·{" "}
+            {temMaisDeUmPreco
+              ? `${lotesOrdenados.length} preços`
+              : money(produto.cost)}
           </span>
         </span>
         <span className="shrink-0 text-neutral-300 transition group-open:rotate-180 dark:text-neutral-600">
@@ -64,6 +77,30 @@ export function LinhaEstoque({
       </summary>
 
       <div className="space-y-4 border-t border-neutral-100 bg-neutral-50 px-3 py-3 dark:border-neutral-800 dark:bg-neutral-950">
+        {/* Quebra do estoque por lote (preço de compra) — só aparece quando
+            tem mais de um preço no momento. Cada saída consome o lote mais
+            antigo primeiro (FIFO), então isso é só o que sobrou. */}
+        {temMaisDeUmPreco && (
+          <div className="cartao px-3 py-2 text-sm">
+            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+              Estoque por lote (mais antigo sai primeiro)
+            </p>
+            <ul className="space-y-0.5">
+              {lotesOrdenados.map((lote, i) => (
+                <li
+                  key={i}
+                  className="flex items-center justify-between tabular-nums"
+                >
+                  <span>
+                    {fmtQty(lote.qty)} {produto.unit}
+                  </span>
+                  <span className="text-neutral-500">{money(lote.cost)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {/* Editar cadastro — inclusive o estoque mínimo. Fica logo no topo,
             visível, porque é uma das coisas mais importantes de configurar
             e ficava escondida demais lá embaixo. */}

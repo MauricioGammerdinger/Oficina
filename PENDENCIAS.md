@@ -1,6 +1,6 @@
 # Pendências e ideias (vindas do uso real)
 
-Lista de pontos que a Adriana foi reportando enquanto usava o sistema (áudios
+Lista de pontos que a Cannabis foi reportando enquanto usava o sistema (áudios
 transcritos) + o pedido avulso do telefone do cliente. Reli tudo de novo com
 calma, ponto por ponto, pra não deixar nada de fora. Isso aqui é só pra não
 perder nada — não significa que tudo vai virar funcionalidade, e não tem
@@ -44,7 +44,7 @@ cobradas detalhadas por peça. Ela queria padronizar isso na oficina também.
       conversar com o pai antes de decidir se/como padronizar isso. Não
       encarar sem confirmar com ela que já bateu esse papo.
 
-## 4. Estoque por lote (FIFO) — grande, precisa validar prioridade
+## 4. Estoque por lote (FIFO) — ✅ feito
 
 Vem do áudio 7, com exemplo numérico bem específico:
 
@@ -58,13 +58,15 @@ Vem do áudio 7, com exemplo numérico bem específico:
 - Comprou mais 3 kg a R$190. O sistema mostra os 6 kg como R$190, mas na
   cabeça dela o estoque real é 3 kg a R$180 + 3 kg a R$190.
 
-- [ ] Pedido: cada entrada de compra vira um **lote** com seu próprio preço,
-      e as saídas vão descontando lote por lote (idealmente o mais antigo
-      primeiro), em vez de um preço de referência único que se sobrescreve.
-      Essa é uma mudança grande na lógica de estoque de hoje (hoje é só soma
-      de entradas menos saídas, sem lote) — vale confirmar com ela o quanto
-      isso realmente importa no dia a dia antes de encarar, porque é a
-      pendência mais trabalhosa da lista.
+- [x] Feito, exatamente conforme o exemplo do áudio: cada entrada guarda o
+      próprio preço, e toda saída (manual, baixa de receita ou ajuste de
+      contagem que achou falta) desconta o lote mais antigo primeiro. Na
+      tela de Estoque, quando um insumo tem mais de um preço no momento, a
+      linha mostra "N preços" e, ao abrir, a lista completa (ex.: "6 un
+      R$38,00 / 4 un R$41,50"). Os relatórios de custo (material gasto,
+      perda em contagem, insumo que mais saiu) passam a usar o preço real
+      do lote consumido em vez do preço mais recente — inclusive pro
+      histórico já lançado antes dessa mudança, que foi recalculado.
 
 ## 5. Consumo padrão x real de itens não lançados por carro
 

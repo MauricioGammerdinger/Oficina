@@ -76,8 +76,16 @@ const depois = await page
   .innerText();
 if (depois.includes("10")) ok("entrada de 4 -> saldo 10");
 else bad(`entrada não somou: ${depois.replace(/\n/g, " | ")}`);
-if (depois.includes("41,50")) ok("preço de referência atualizado pela entrada");
-else bad(`preço não atualizou: ${depois.replace(/\n/g, " | ")}`);
+// Duas entradas em preços diferentes viram dois lotes (FIFO) — a linha
+// resumida passa a avisar "2 preços" em vez de mostrar só um.
+if (depois.includes("2 preços")) ok("virou dois lotes de preço (FIFO)");
+else bad(`não detectou os dois lotes: ${depois.replace(/\n/g, " | ")}`);
+const linhaDepois = page.locator("summary", { hasText: "Massa poliéster 900g" });
+await linhaDepois.click(); // reabre: page.goto fechou o <details>
+const blocoDepois = page.locator("details", { has: linhaDepois }).first();
+const textoLotes = await blocoDepois.innerText();
+if (textoLotes.includes("41,50")) ok("lote novo aparece com o preço lançado");
+else bad(`lote com preço novo não apareceu: ${textoLotes.replace(/\n/g, " | ")}`);
 
 // --- busca
 await page.goto(`${base}/estoque?q=pigmento`);

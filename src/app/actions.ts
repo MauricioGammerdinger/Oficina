@@ -17,8 +17,13 @@ import {
   vehicles,
 } from "@/db/schema";
 import { COOKIE_NAME, sessionToken } from "@/lib/auth";
+import { fifoCostForNewConsumption } from "@/lib/fifo";
 import { parseId, parseNum, parseStr } from "@/lib/parse";
-import { getProducts, getVehiclePlannedItems } from "@/lib/queries";
+import {
+  getMoveHistoryForFifo,
+  getProducts,
+  getVehiclePlannedItems,
+} from "@/lib/queries";
 
 /* ------------------------------------------------------------------ login */
 
@@ -120,11 +125,31 @@ export async function movimentar(formData: FormData) {
   const vehicleRaw = parseStr(formData.get("vehicleId"));
   const unitCost = parseNum(formData.get("unitCost"));
 
+  // Na saída, guarda o custo real do lote mais antigo consumido (FIFO) em
+  // vez de deixar em branco — é o que faz os relatórios de custo baterem
+  // com o que realmente foi pago pelo material que saiu, mesmo depois do
+  // preço de referência já ter mudado.
+  let custoSaida: number | null = null;
+  if (kind === "out") {
+    const [historico, [produto]] = await Promise.all([
+      getMoveHistoryForFifo(productId),
+      db
+        .select({ cost: products.cost })
+        .from(products)
+        .where(eq(products.id, productId)),
+    ]);
+    custoSaida = fifoCostForNewConsumption(
+      historico,
+      quantidade,
+      produto?.cost ?? 0
+    );
+  }
+
   await db.insert(stockMoves).values({
     productId,
     kind,
     qty: quantidade,
-    unitCost: kind === "in" && unitCost > 0 ? unitCost : null,
+    unitCost: kind === "in" ? (unitCost > 0 ? unitCost : null) : custoSaida,
     note: parseStr(formData.get("note")),
     vehicleId: vehicleRaw ? Number(vehicleRaw) : null,
   });
@@ -308,11 +333,18 @@ export async function baixarPrevistos(formData: FormData) {
   const planned = await getVehiclePlannedItems(vehicleId);
   if (!planned.length) return;
 
+  // Cada insumo aparece uma vez só nessa lista (já vem agrupado), então dá
+  // pra calcular o custo FIFO de cada saída direto do histórico de cada um.
+  const valores = await Promise.all(
+    planned.map((item) => getMoveHistoryForFifo(item.id))
+  );
+
   await db.insert(stockMoves).values(
-    planned.map((item) => ({
+    planned.map((item, i) => ({
       productId: item.id,
       kind: "out",
       qty: item.qty,
+      unitCost: fifoCostForNewConsumption(valores[i], item.qty, item.cost),
       note: "Consumo previsto do serviço",
       vehicleId,
     }))
@@ -403,6 +435,7 @@ export async function fecharContagem(formData: FormData) {
 
   const lista = await getProducts();
   const saldos = new Map(lista.map((p) => [p.id, p.balance]));
+  const custos = new Map(lista.map((p) => [p.id, p.cost]));
 
   const itens = await db
     .select({
@@ -412,20 +445,40 @@ export async function fecharContagem(formData: FormData) {
     .from(countItems)
     .where(eq(countItems.countId, countId));
 
-  const ajustes = [];
+  const diferencas: { productId: number; diferenca: number }[] = [];
   for (const item of itens) {
     if (item.countedQty === null) continue;
     const sistema = saldos.get(item.productId) ?? 0;
     const diferenca = item.countedQty - sistema;
     // Tolerância para não poluir o histórico com ruído de arredondamento.
     if (Math.abs(diferenca) < 0.001) continue;
-    ajustes.push({
-      productId: item.productId,
-      kind: "adjust",
-      qty: diferenca,
-      note: `Ajuste da contagem #${countId}`,
-    });
+    diferencas.push({ productId: item.productId, diferenca });
   }
+
+  // Sumiu estoque (diferença negativa): o ajuste "saiu" do lote mais
+  // antigo (FIFO), igual uma saída normal. Achou mais do que o esperado
+  // (diferença positiva): não tem lote de compra pra isso, então entra
+  // pelo preço de referência atual.
+  const historicos = await Promise.all(
+    diferencas.map((d) =>
+      d.diferenca < 0 ? getMoveHistoryForFifo(d.productId) : null
+    )
+  );
+
+  const ajustes = diferencas.map(({ productId, diferenca }, i) => ({
+    productId,
+    kind: "adjust",
+    qty: diferenca,
+    unitCost:
+      diferenca < 0
+        ? fifoCostForNewConsumption(
+            historicos[i]!,
+            -diferenca,
+            custos.get(productId) ?? 0
+          )
+        : custos.get(productId) ?? 0,
+    note: `Ajuste da contagem #${countId}`,
+  }));
 
   if (ajustes.length) await db.insert(stockMoves).values(ajustes);
 

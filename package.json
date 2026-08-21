@@ -13,6 +13,7 @@
     "db:studio": "drizzle-kit studio",
     "seed": "tsx scripts/seed.ts",
     "db:reset": "tsx scripts/reset.ts",
+    "db:backfill-fifo": "tsx scripts/backfill-fifo.ts",
     "test:smoke": "node tests/smoke.mjs"
   },
   "dependencies": {

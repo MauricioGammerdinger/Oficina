@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import { db } from "@/db";
+import { simulateFifo, type MoveForFifo } from "@/lib/fifo";
 
 export type ProductRow = {
   id: number;
@@ -46,6 +47,86 @@ export async function getProducts(): Promise<ProductRow[]> {
     minStock: num(r.minStock),
     balance: num(r.balance),
   }));
+}
+
+/**
+ * Histórico de movimentos de um insumo, na ordem que aconteceram — a
+ * matéria-prima da simulação de lote (FIFO). Sempre lido do zero: nada
+ * disso é guardado, só recalculado quando precisa.
+ */
+export async function getMoveHistoryForFifo(
+  productId: number
+): Promise<MoveForFifo[]> {
+  const { rows } = await db.execute(sql`
+    select id, kind, qty, unit_cost as "unitCost", created_at as "createdAt"
+    from stock_moves
+    where product_id = ${productId}
+    order by created_at, id
+  `);
+  return rows.map((r) => ({
+    id: num(r.id),
+    kind: String(r.kind) as MoveForFifo["kind"],
+    qty: num(r.qty),
+    unitCost: r.unitCost === null ? null : num(r.unitCost),
+    createdAt: String(r.createdAt),
+  }));
+}
+
+/**
+ * Lotes que sobraram de cada insumo, agrupados por preço — pra mostrar
+ * "3kg a R$180 + 3kg a R$190" em vez de só um preço médio. Busca o
+ * histórico inteiro de uma vez (todos os insumos) pra não fazer uma
+ * consulta por produto na tela de estoque.
+ */
+export async function getLotesPorProduto(): Promise<
+  Map<number, { qty: number; cost: number }[]>
+> {
+  const { rows } = await db.execute(sql`
+    select
+      m.product_id as "productId",
+      m.id, m.kind, m.qty, m.unit_cost as "unitCost", m.created_at as "createdAt",
+      p.cost as "refCost"
+    from stock_moves m
+    join products p on p.id = m.product_id
+    where p.active = true
+    order by m.product_id, m.created_at, m.id
+  `);
+
+  const porProduto = new Map<
+    number,
+    { moves: MoveForFifo[]; refCost: number }
+  >();
+  for (const r of rows) {
+    const productId = num(r.productId);
+    if (!porProduto.has(productId)) {
+      porProduto.set(productId, { moves: [], refCost: num(r.refCost) });
+    }
+    porProduto.get(productId)!.moves.push({
+      id: num(r.id),
+      kind: String(r.kind) as MoveForFifo["kind"],
+      qty: num(r.qty),
+      unitCost: r.unitCost === null ? null : num(r.unitCost),
+      createdAt: String(r.createdAt),
+    });
+  }
+
+  const resultado = new Map<number, { qty: number; cost: number }[]>();
+  for (const [productId, { moves, refCost }] of porProduto) {
+    const { lots } = simulateFifo(moves, refCost);
+    // Agrupa lotes que acabaram com o mesmo preço (ex.: duas entradas
+    // separadas na mesma compra), pra não poluir a lista à toa.
+    const agrupado = new Map<number, number>();
+    for (const lote of lots) {
+      if (lote.qty <= 1e-9) continue;
+      agrupado.set(lote.cost, (agrupado.get(lote.cost) ?? 0) + lote.qty);
+    }
+    resultado.set(
+      productId,
+      [...agrupado.entries()].map(([cost, qty]) => ({ cost, qty }))
+    );
+  }
+
+  return resultado;
 }
 
 export async function getShoppingList() {

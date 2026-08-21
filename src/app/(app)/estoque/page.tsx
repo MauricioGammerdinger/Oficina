@@ -1,7 +1,12 @@
 import { criarProduto } from "@/app/actions";
 import { LinhaEstoque } from "@/components/linha-estoque";
 import { qty as fmtQty } from "@/lib/parse";
-import { getProducts, getRecentMoves, getVehicles } from "@/lib/queries";
+import {
+  getLotesPorProduto,
+  getProducts,
+  getRecentMoves,
+  getVehicles,
+} from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -13,10 +18,11 @@ export default async function EstoquePage({
   const { q } = await searchParams;
   const busca = (q ?? "").trim().toLowerCase();
 
-  const [todos, veiculos, movimentos] = await Promise.all([
+  const [todos, veiculos, movimentos, lotes] = await Promise.all([
     getProducts(),
     getVehicles(),
     getRecentMoves(25),
+    getLotesPorProduto(),
   ]);
 
   const produtos = busca
@@ -113,6 +119,7 @@ export default async function EstoquePage({
               key={produto.id}
               produto={produto}
               veiculos={carrosAbertos}
+              lotes={lotes.get(produto.id) ?? []}
             />
           ))
         )}
