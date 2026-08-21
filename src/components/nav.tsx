@@ -89,6 +89,13 @@ function Icone({ nome, className }: { nome: string; className?: string }) {
           <line x1="18" y1="20" x2="18" y2="4" />
         </svg>
       );
+    case "admin":
+      return (
+        <svg {...props}>
+          <circle cx="12" cy="8" r="3.2" />
+          <path d="M4.5 20.2c1.1-3.3 4-5.2 7.5-5.2s6.4 1.9 7.5 5.2" />
+        </svg>
+      );
     default:
       return null;
   }
@@ -102,16 +109,21 @@ function Icone({ nome, className }: { nome: string; className?: string }) {
 export function Nav({
   alertas,
   orientation = "horizontal",
+  mostrarAdmin = false,
 }: {
   alertas: number;
   orientation?: "horizontal" | "vertical";
+  mostrarAdmin?: boolean;
 }) {
   const pathname = usePathname();
   const vertical = orientation === "vertical";
+  const todosLinks = mostrarAdmin
+    ? [...links, { href: "/admin", label: "Usuários", icon: "admin" }]
+    : links;
 
   return (
     <nav className={vertical ? "flex flex-col gap-1" : "flex gap-1 overflow-x-auto"}>
-      {links.map((link) => {
+      {todosLinks.map((link) => {
         const ativo = link.exact
           ? pathname === link.href
           : pathname === link.href || pathname.startsWith(`${link.href}/`);

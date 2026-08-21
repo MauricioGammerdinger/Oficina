@@ -7,16 +7,18 @@ import { revalidatePath } from "next/cache";
 
 import { db } from "@/db";
 import {
+  allowedSignupEmails,
   countItems,
   counts,
   products,
   serviceTypeItems,
   serviceTypes,
   stockMoves,
+  users,
   vehicleServices,
   vehicles,
 } from "@/db/schema";
-import { COOKIE_NAME, sessionToken } from "@/lib/auth";
+import { COOKIE_NAME, criarSessao, normalizarEmail, VALIDADE_MS } from "@/lib/auth";
 import { fifoCostForNewConsumption } from "@/lib/fifo";
 import { parseId, parseNum, parseStr } from "@/lib/parse";
 import {
@@ -24,23 +26,134 @@ import {
   getProducts,
   getVehiclePlannedItems,
 } from "@/lib/queries";
+import { getUsuarioLogado } from "@/lib/sessao";
+import { HASH_FALSO, hashPassword, verifyPassword } from "@/lib/senha";
 
-/* ------------------------------------------------------------------ login */
-
-export async function entrar(formData: FormData) {
-  const senha = String(formData.get("senha") ?? "");
-  if (senha !== process.env.APP_PASSWORD) {
-    redirect("/entrar?erro=1");
-  }
+async function abrirSessaoPara(userId: number) {
   const jar = await cookies();
-  jar.set(COOKIE_NAME, await sessionToken(), {
+  jar.set(COOKIE_NAME, await criarSessao(userId), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 60 * 60 * 24 * 90, // 90 dias: ela não quer digitar senha toda hora
+    maxAge: Math.floor(VALIDADE_MS / 1000),
   });
+}
+
+/* ------------------------------------------------------------------ login */
+
+export async function entrar(formData: FormData) {
+  const email = normalizarEmail(String(formData.get("email") ?? ""));
+  const senha = String(formData.get("senha") ?? "");
+
+  const [user] = await db
+    .select({
+      id: users.id,
+      passwordHash: users.passwordHash,
+      active: users.active,
+    })
+    .from(users)
+    .where(eq(users.email, email));
+
+  // Confere a senha mesmo quando o email não existe (contra um hash
+  // qualquer), pra não dar mais rápido pra descobrir emails sem conta.
+  const senhaOk = await verifyPassword(senha, user?.passwordHash ?? HASH_FALSO);
+
+  if (!user || !user.active || !senhaOk) {
+    redirect("/entrar?erro=1");
+  }
+
+  await abrirSessaoPara(user.id);
   redirect("/estoque");
+}
+
+/* ---------------------------------------------------------------- cadastro */
+
+export async function cadastrar(formData: FormData) {
+  const email = normalizarEmail(String(formData.get("email") ?? ""));
+  const name = parseStr(formData.get("name")) ?? "";
+  const senha = String(formData.get("senha") ?? "");
+  const confirmarSenha = String(formData.get("confirmarSenha") ?? "");
+
+  if (!email || !name) redirect("/cadastrar?erro=dados");
+  if (senha.length < 6) redirect("/cadastrar?erro=senhaCurta");
+  if (senha !== confirmarSenha) redirect("/cadastrar?erro=senhaDiferente");
+
+  const [convite] = await db
+    .select({ id: allowedSignupEmails.id })
+    .from(allowedSignupEmails)
+    .where(eq(allowedSignupEmails.email, email));
+  if (!convite) redirect("/cadastrar?erro=semConvite");
+
+  const [existente] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.email, email));
+  if (existente) redirect("/cadastrar?erro=jaExiste");
+
+  const passwordHash = await hashPassword(senha);
+  const [criado] = await db
+    .insert(users)
+    .values({ email, name, passwordHash })
+    .returning({ id: users.id });
+
+  await abrirSessaoPara(criado.id);
+  redirect("/estoque");
+}
+
+/* -------------------------------------------------------------------- admin */
+
+async function exigirAdmin() {
+  const usuario = await getUsuarioLogado();
+  if (!usuario?.isAdmin) throw new Error("Só administradores podem fazer isso.");
+  return usuario;
+}
+
+export async function convidarEmail(formData: FormData) {
+  await exigirAdmin();
+  const email = normalizarEmail(String(formData.get("email") ?? ""));
+  if (!email) return;
+  const note = parseStr(formData.get("note"));
+
+  await db
+    .insert(allowedSignupEmails)
+    .values({ email, note })
+    .onConflictDoNothing();
+
+  revalidatePath("/admin");
+}
+
+export async function removerConvite(formData: FormData) {
+  await exigirAdmin();
+  const id = parseId(formData.get("id"));
+  await db.delete(allowedSignupEmails).where(eq(allowedSignupEmails.id, id));
+  revalidatePath("/admin");
+}
+
+export async function resetarSenhaUsuario(formData: FormData) {
+  await exigirAdmin();
+  const id = parseId(formData.get("id"));
+  const novaSenha = String(formData.get("novaSenha") ?? "");
+  if (novaSenha.length < 6) return;
+
+  const passwordHash = await hashPassword(novaSenha);
+  await db.update(users).set({ passwordHash }).where(eq(users.id, id));
+  revalidatePath("/admin");
+}
+
+export async function alternarUsuarioAtivo(formData: FormData) {
+  const admin = await exigirAdmin();
+  const id = parseId(formData.get("id"));
+  if (id === admin.id) return; // não deixa o admin se desativar sem querer
+
+  const [alvo] = await db
+    .select({ active: users.active })
+    .from(users)
+    .where(eq(users.id, id));
+  if (!alvo) return;
+
+  await db.update(users).set({ active: !alvo.active }).where(eq(users.id, id));
+  revalidatePath("/admin");
 }
 
 export async function sair() {

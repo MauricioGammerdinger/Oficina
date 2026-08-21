@@ -598,3 +598,56 @@ export async function getComparativoFornecedores() {
   // Só interessa quando dá pra comparar — ou seja, mais de um fornecedor.
   return [...porProduto.values()].filter((p) => p.fornecedores.length > 1);
 }
+
+/* --------------------------------------------------------------- usuários */
+
+export type UserRow = {
+  id: number;
+  email: string;
+  name: string;
+  isAdmin: boolean;
+  active: boolean;
+  createdAt: string;
+};
+
+export async function getUsers(): Promise<UserRow[]> {
+  const { rows } = await db.execute(sql`
+    select id, email, name, is_admin as "isAdmin", active, created_at as "createdAt"
+    from users
+    order by created_at
+  `);
+  return rows.map((r) => ({
+    id: num(r.id),
+    email: String(r.email),
+    name: String(r.name),
+    isAdmin: Boolean(r.isAdmin),
+    active: Boolean(r.active),
+    createdAt: String(r.createdAt),
+  }));
+}
+
+export type ConviteRow = {
+  id: number;
+  email: string;
+  note: string | null;
+  createdAt: string;
+  usado: boolean;
+};
+
+/** Convites pendentes + já usados (pra saber quem já entrou de quem falta). */
+export async function getConvites(): Promise<ConviteRow[]> {
+  const { rows } = await db.execute(sql`
+    select
+      c.id, c.email, c.note, c.created_at as "createdAt",
+      exists(select 1 from users u where u.email = c.email) as usado
+    from allowed_signup_emails c
+    order by c.created_at
+  `);
+  return rows.map((r) => ({
+    id: num(r.id),
+    email: String(r.email),
+    note: r.note === null ? null : String(r.note),
+    createdAt: String(r.createdAt),
+    usado: Boolean(r.usado),
+  }));
+}

@@ -5,8 +5,9 @@
  * física com ajuste de saldo.
  *
  * Espera um servidor rodando em BASE_URL (padrão http://localhost:3000) com o
- * banco recém-semeado (npm run db:reset && npm run seed) e APP_PASSWORD com o
- * valor de TEST_PASSWORD.
+ * banco recém-semeado (npm run db:reset && npm run seed) — o seed já cria a
+ * conta de teste (email/senha em TEST_EMAIL/TEST_PASSWORD, com um padrão se
+ * não informar nenhum dos dois).
  *
  *   npm run test:smoke
  */
@@ -14,6 +15,7 @@ import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
 
 const base = process.env.BASE_URL ?? "http://localhost:3000";
+const email = process.env.TEST_EMAIL ?? "teste@teste.com";
 const senha = process.env.TEST_PASSWORD ?? "oficina123";
 const shots = process.env.SHOTS_DIR ?? "./tests/shots";
 mkdirSync(shots, { recursive: true });
@@ -40,13 +42,15 @@ await page.goto(`${base}/estoque`);
 if (page.url().includes("/entrar")) ok("rota protegida redireciona para login");
 else bad("rota protegida NAO redirecionou");
 
+await page.fill('input[name="email"]', email);
 await page.fill('input[name="senha"]', "errada");
 await page.click('button:has-text("Entrar")');
 await page.waitForLoadState("networkidle");
-if (await page.locator("text=Senha incorreta").isVisible())
+if (await page.locator("text=Email ou senha incorretos").isVisible())
   ok("senha errada é rejeitada");
 else bad("senha errada passou");
 
+await page.fill('input[name="email"]', email);
 await page.fill('input[name="senha"]', senha);
 await page.click('button:has-text("Entrar")');
 await page.waitForURL("**/estoque");

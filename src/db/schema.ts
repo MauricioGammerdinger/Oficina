@@ -153,3 +153,45 @@ export const countItems = pgTable(
     uniqueIndex("item_unico_por_contagem").on(table.countId, table.productId),
   ]
 );
+
+/**
+ * Contas individuais (email + senha). Todo mundo que loga continua vendo
+ * os mesmos dados de sempre — isso aqui não separa estoque por pessoa, só
+ * identifica quem entrou e permite senha própria em vez da senha única
+ * compartilhada de antes.
+ */
+export const users = pgTable(
+  "users",
+  {
+    id: serial("id").primaryKey(),
+    email: text("email").notNull(),
+    name: text("name").notNull(),
+    passwordHash: text("password_hash").notNull(),
+    /** Administrador: pode convidar gente nova e resetar senha de alguém. */
+    isAdmin: boolean("is_admin").notNull().default(false),
+    active: boolean("active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [uniqueIndex("users_email_unico").on(table.email)]
+);
+
+/**
+ * Lista de convites: só quem tem o email aqui consegue se cadastrar.
+ * Cadastro é fechado de propósito — sem isso, qualquer um com o link do
+ * site poderia criar uma conta sozinho.
+ */
+export const allowedSignupEmails = pgTable(
+  "allowed_signup_emails",
+  {
+    id: serial("id").primaryKey(),
+    email: text("email").notNull(),
+    /** Nome de quem é, só pra lembrar depois (ex.: "Cannabis"). */
+    note: text("note"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [uniqueIndex("convites_email_unico").on(table.email)]
+);

@@ -6,7 +6,7 @@
  *   npm run seed
  */
 import "./carregar-env";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 import { db } from "../src/db";
 import {
@@ -14,7 +14,10 @@ import {
   serviceTypeItems,
   serviceTypes,
   stockMoves,
+  users,
 } from "../src/db/schema";
+import { hashPassword } from "../src/lib/senha";
+import { normalizarEmail } from "../src/lib/auth";
 
 type Insumo = {
   name: string;
@@ -176,12 +179,30 @@ async function main() {
     }
   }
 
+  // Conta de teste, só pra dev/smoke test conseguir logar sem precisar
+  // rodar o script de criar-admin à parte. Nunca roda em produção (esse
+  // script só existe pra popular banco de teste).
+  const emailTeste = normalizarEmail(process.env.TEST_EMAIL ?? "teste@teste.com");
+  const senhaTeste = process.env.TEST_PASSWORD ?? "oficina123";
+  const [existente] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.email, emailTeste));
+  if (!existente) {
+    await db.insert(users).values({
+      email: emailTeste,
+      name: "Conta de teste",
+      passwordHash: await hashPassword(senhaTeste),
+      isAdmin: true,
+    });
+  }
+
   const [{ total }] = (
     await db.execute(sql`select count(*)::int as total from products`)
   ).rows as { total: number }[];
 
   console.log(
-    `Seed pronto: ${total} insumos e ${receitas.length} tipos de serviço.`
+    `Seed pronto: ${total} insumos e ${receitas.length} tipos de serviço. Login: ${emailTeste} / ${senhaTeste}`
   );
   process.exit(0);
 }

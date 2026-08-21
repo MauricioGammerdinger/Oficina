@@ -2,6 +2,7 @@ import { sair } from "@/app/actions";
 import { AlternarTema } from "@/components/alternar-tema";
 import { Nav } from "@/components/nav";
 import { getShoppingList } from "@/lib/queries";
+import { getUsuarioLogado } from "@/lib/sessao";
 
 // Nada aqui pode ser gerado no build: o layout lê o banco a cada acesso.
 // Sem isso o deploy quebra quando o banco não está acessível na hora do build.
@@ -14,7 +15,10 @@ export default async function AppLayout({
 }) {
   // O contador de alertas fica no menu para ela ver que falta comprar algo
   // sem precisar abrir a tela.
-  const compras = await getShoppingList();
+  const [compras, usuario] = await Promise.all([
+    getShoppingList(),
+    getUsuarioLogado(),
+  ]);
 
   return (
     // Um "cartão" único e arredondado envolvendo tudo — menu e conteúdo —
@@ -33,13 +37,24 @@ export default async function AppLayout({
               lá embaixo como texto pequeno e cinza e ninguém achava. */}
           <AlternarTema />
           <div className="mt-4">
-            <Nav alertas={compras.length} orientation="vertical" />
+            <Nav
+              alertas={compras.length}
+              orientation="vertical"
+              mostrarAdmin={usuario?.isAdmin ?? false}
+            />
           </div>
-          <form action={sair} className="mt-auto pt-4">
-            <button className="text-xs text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-200">
-              sair
-            </button>
-          </form>
+          <div className="mt-auto flex items-center justify-between gap-2 pt-4">
+            {usuario && (
+              <span className="min-w-0 flex-1 truncate text-xs text-neutral-400">
+                {usuario.name}
+              </span>
+            )}
+            <form action={sair}>
+              <button className="shrink-0 text-xs text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-200">
+                sair
+              </button>
+            </form>
+          </div>
         </aside>
 
         <div className="min-w-0 flex-1 px-4 pb-16 pt-4 sm:px-6 print:px-0 print:pb-0 print:pt-0">
@@ -47,7 +62,10 @@ export default async function AppLayout({
               faixa horizontal rolável no topo, como já era antes. */}
           <header className="mb-5 flex flex-col gap-3 sm:hidden print:hidden">
             <div className="flex items-center justify-between gap-3">
-              <Nav alertas={compras.length} />
+              <Nav
+                alertas={compras.length}
+                mostrarAdmin={usuario?.isAdmin ?? false}
+              />
               <form action={sair}>
                 <button className="text-xs text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-200">
                   sair
