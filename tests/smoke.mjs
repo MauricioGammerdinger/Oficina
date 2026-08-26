@@ -148,19 +148,57 @@ const previstoTxt = await page
   .innerText();
 if (/insumos/.test(previstoTxt)) ok("material previsto aparece pela receita");
 else bad("material previsto não apareceu");
-if (/SOBRA|Sobra/i.test(resumo)) ok("resumo mostra cobrado / material / sobra");
+if (/SOBRA|Sobra/i.test(resumo) && /PEÇAS|Peças/i.test(resumo))
+  ok("resumo mostra cobrado / material / peças / sobra");
 else bad("resumo incompleto");
 
-// confere a conta: sobra = cobrado - material
-const nums = [...resumo.matchAll(/R\$\s*([\d.]+,\d{2})/g)].map((m) =>
-  Number(m[1].replace(/\./g, "").replace(",", "."))
-);
-if (nums.length >= 3) {
-  const [cobrado, material, sobra] = nums;
-  if (Math.abs(cobrado - material - sobra) < 0.02)
-    ok(`conta bate: ${cobrado} − ${material} = ${sobra}`);
-  else bad(`conta NÃO bate: ${cobrado} − ${material} ≠ ${sobra}`);
+// confere a conta: sobra = cobrado - material - peças (lê por rótulo, não por
+// posição, já que o resumo agora tem 4 números em vez de 3)
+const valorApos = (rotulo) => {
+  const m = resumo.match(
+    new RegExp(`${rotulo}[^\\d]*R\\$\\s*([\\d.]+,\\d{2})`, "i")
+  );
+  return m ? Number(m[1].replace(/\./g, "").replace(",", ".")) : null;
+};
+const cobrado = valorApos("Cobrado");
+const material = valorApos("Material");
+const pecas = valorApos("Peças");
+const sobra = valorApos("Sobra");
+if (cobrado !== null && material !== null && pecas !== null && sobra !== null) {
+  if (Math.abs(cobrado - material - pecas - sobra) < 0.02)
+    ok(`conta bate: ${cobrado} − ${material} − ${pecas} = ${sobra}`);
+  else bad(`conta NÃO bate: ${cobrado} − ${material} − ${pecas} ≠ ${sobra}`);
 } else bad("não consegui ler os valores do resumo");
+
+// --- peças e itens avulsos
+await page.fill('input[name="name"]', "Para-choque dianteiro");
+await page.fill('input[name="estimatedValue"]', "500");
+await page.fill('input[name="paidValue"]', "430");
+await page.selectOption('select[name="condition"]', "recuperada");
+await page.click('button:has-text("Adicionar")');
+await page.waitForSelector("text=Para-choque dianteiro", { timeout: 15000 });
+const comPeca = await page.locator("main").innerText();
+if (/Para-choque dianteiro/.test(comPeca) && /recuperada/.test(comPeca))
+  ok("peça avulsa aparece na ficha do carro");
+else bad("peça avulsa não apareceu");
+
+const resumoComPeca = await page
+  .locator("section", { hasText: "Cobrado" })
+  .first()
+  .innerText();
+if (/R\$\s*430,00/.test(resumoComPeca))
+  ok("valor pago da peça entra no total de Peças do resumo");
+else bad(`total de peças não bateu: ${resumoComPeca.replace(/\n/g, " | ")}`);
+
+await page.click('button:has-text("remover")');
+await page.waitForFunction(
+  () => !document.body.innerText.includes("Para-choque dianteiro"),
+  null,
+  { timeout: 15000 }
+).catch(() => {});
+if (!(await page.locator("main").innerText()).includes("Para-choque dianteiro"))
+  ok("remover peça tira ela da ficha e some do total");
+else bad("peça não foi removida");
 
 // --- baixa dos previstos
 const antesBaixa = await page.locator("main").innerText();

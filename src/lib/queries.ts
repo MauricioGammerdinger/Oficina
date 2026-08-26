@@ -168,6 +168,8 @@ export type VehicleRow = {
   estimatedCost: number;
   /** Material que já saiu do estoque lançado nesse carro */
   actualCost: number;
+  /** Peças/itens avulsos lançados nesse carro (pago, ou orçado se ainda não pagou) */
+  partsCost: number;
 };
 
 export async function getVehicles(): Promise<VehicleRow[]> {
@@ -198,7 +200,12 @@ export async function getVehicles(): Promise<VehicleRow[]> {
           from stock_moves m
           join products p on p.id = m.product_id
          where m.vehicle_id = v.id and m.kind = 'out'
-      ), 0) as "actualCost"
+      ), 0) as "actualCost",
+      coalesce((
+        select sum(coalesce(vp.paid_value, vp.estimated_value, 0))
+          from vehicle_parts vp
+         where vp.vehicle_id = v.id
+      ), 0) as "partsCost"
     from vehicles v
     order by
       case v.status when 'andamento' then 0 when 'previsto' then 1 else 2 end,
@@ -221,12 +228,42 @@ export async function getVehicles(): Promise<VehicleRow[]> {
     services: (r.services as { id: number; name: string }[]) ?? [],
     estimatedCost: num(r.estimatedCost),
     actualCost: num(r.actualCost),
+    partsCost: num(r.partsCost),
   }));
 }
 
 export async function getVehicle(id: number) {
   const all = await getVehicles();
   return all.find((v) => v.id === id) ?? null;
+}
+
+export type VehiclePartRow = {
+  id: number;
+  name: string;
+  estimatedValue: number | null;
+  paidValue: number | null;
+  condition: string;
+};
+
+/** Peças/itens avulsos lançados nesse carro (para-choque, farol, removedor de tinta, etc.) */
+export async function getVehicleParts(vehicleId: number): Promise<VehiclePartRow[]> {
+  const { rows } = await db.execute(sql`
+    select
+      id, name,
+      estimated_value as "estimatedValue",
+      paid_value      as "paidValue",
+      condition
+    from vehicle_parts
+    where vehicle_id = ${vehicleId}
+    order by id
+  `);
+  return rows.map((r) => ({
+    id: num(r.id),
+    name: String(r.name),
+    estimatedValue: r.estimatedValue === null ? null : num(r.estimatedValue),
+    paidValue: r.paidValue === null ? null : num(r.paidValue),
+    condition: String(r.condition),
+  }));
 }
 
 export type ServiceTypeRow = {
@@ -513,6 +550,39 @@ export async function getTopConsumo(dias = 30, limit = 6) {
     qty: num(r.qty),
     valor: num(r.valor),
   }));
+}
+
+/**
+ * Régua pra bater o olho se o consumo de insumo em lote (ex.: lixa, que sai
+ * pro time sem vincular a um carro) está dentro do esperado: quantos carros
+ * tiveram material lançado no período, e quantas peças/itens avulsos foram
+ * peça nova x recuperada — pra comparar com o total de insumo consumido
+ * (getTopConsumo) do mesmo período.
+ */
+export async function getAtividadePeriodo(dias = 30) {
+  const { rows } = await db.execute(sql`
+    select
+      (select count(distinct vehicle_id)
+         from stock_moves
+        where kind = 'out'
+          and vehicle_id is not null
+          and created_at >= now() - (${dias} || ' days')::interval
+      ) as "carros",
+      (select count(*) from vehicle_parts
+        where condition = 'nova'
+          and created_at >= now() - (${dias} || ' days')::interval
+      ) as "pecasNovas",
+      (select count(*) from vehicle_parts
+        where condition = 'recuperada'
+          and created_at >= now() - (${dias} || ' days')::interval
+      ) as "pecasRecuperadas"
+  `);
+  const r = rows[0] ?? {};
+  return {
+    carros: num(r.carros),
+    pecasNovas: num(r.pecasNovas),
+    pecasRecuperadas: num(r.pecasRecuperadas),
+  };
 }
 
 /**

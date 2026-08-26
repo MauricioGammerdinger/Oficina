@@ -15,6 +15,7 @@ import {
   serviceTypes,
   stockMoves,
   users,
+  vehicleParts,
   vehicleServices,
   vehicles,
 } from "@/db/schema";
@@ -467,6 +468,41 @@ export async function baixarPrevistos(formData: FormData) {
   revalidatePath("/comprar");
   revalidatePath("/carros");
   revalidatePath(`/carros/${vehicleId}`);
+}
+
+/**
+ * Peça/item avulso comprado à parte pro carro (para-choque, farol,
+ * removedor de tinta, calafetagem, colagem de parabrisa...). Não mexe em
+ * estoque de insumo — é combinado que peça não tem controle de estoque
+ * aqui, só o gasto entra na conta do carro.
+ */
+export async function adicionarPeca(formData: FormData) {
+  const vehicleId = parseId(formData.get("vehicleId"));
+  const name = parseStr(formData.get("name"));
+  if (!name) return;
+
+  const condition = String(formData.get("condition")) === "recuperada" ? "recuperada" : "nova";
+  const estimatedValue = parseNum(formData.get("estimatedValue"));
+  const paidValue = parseNum(formData.get("paidValue"));
+
+  await db.insert(vehicleParts).values({
+    vehicleId,
+    name,
+    estimatedValue: estimatedValue > 0 ? estimatedValue : null,
+    paidValue: paidValue > 0 ? paidValue : null,
+    condition,
+  });
+
+  revalidatePath(`/carros/${vehicleId}`);
+  revalidatePath("/carros");
+}
+
+export async function removerPeca(formData: FormData) {
+  const id = parseId(formData.get("id"));
+  const vehicleId = parseId(formData.get("vehicleId"));
+  await db.delete(vehicleParts).where(eq(vehicleParts.id, id));
+  revalidatePath(`/carros/${vehicleId}`);
+  revalidatePath("/carros");
 }
 
 /* -------------------------------------------------------------- contagem */

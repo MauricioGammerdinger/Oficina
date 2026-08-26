@@ -2,17 +2,20 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import {
+  adicionarPeca,
   alternarServico,
   atualizarVeiculo,
   baixarPrevistos,
   definirStatusVeiculo,
   excluirVeiculo,
+  removerPeca,
 } from "@/app/actions";
 import { money, qty as fmtQty } from "@/lib/parse";
 import {
   getServiceTypes,
   getVehicle,
   getVehicleMoves,
+  getVehicleParts,
   getVehiclePlannedItems,
 } from "@/lib/queries";
 
@@ -33,11 +36,12 @@ export default async function CarroPage({
   const carroId = Number(id);
   if (!Number.isInteger(carroId)) notFound();
 
-  const [carro, tipos, previstos, movimentos] = await Promise.all([
+  const [carro, tipos, previstos, movimentos, pecas] = await Promise.all([
     getVehicle(carroId),
     getServiceTypes(),
     getVehiclePlannedItems(carroId),
     getVehicleMoves(carroId),
+    getVehicleParts(carroId),
   ]);
   if (!carro) notFound();
 
@@ -47,7 +51,8 @@ export default async function CarroPage({
   const custoReal = carro.actualCost;
   const custoUsado =
     carro.status === "concluido" && custoReal > 0 ? custoReal : custoPrevisto;
-  const margem = carro.price - custoUsado;
+  const pecasTotal = carro.partsCost;
+  const margem = carro.price - custoUsado - pecasTotal;
   const percentual = carro.price > 0 ? (margem / carro.price) * 100 : null;
 
   return (
@@ -73,7 +78,7 @@ export default async function CarroPage({
       </div>
 
       {/* Resumo da conta: é isso que responde "compensa fazer?" */}
-      <section className="cartao grid grid-cols-3 divide-x divide-neutral-100 dark:divide-neutral-800">
+      <section className="cartao grid grid-cols-2 divide-x divide-y divide-neutral-100 sm:grid-cols-4 sm:divide-y-0 dark:divide-neutral-800">
         <div className="p-3">
           <p className="text-xs uppercase tracking-wide text-neutral-500">
             Cobrado
@@ -92,6 +97,19 @@ export default async function CarroPage({
           {custoReal > 0 && (
             <p className="text-xs text-neutral-400 tabular-nums">
               previsto {money(custoPrevisto)} · real {money(custoReal)}
+            </p>
+          )}
+        </div>
+        <div className="p-3">
+          <p className="text-xs uppercase tracking-wide text-neutral-500">
+            Peças
+          </p>
+          <p className="mt-0.5 text-lg font-semibold tabular-nums">
+            {money(pecasTotal)}
+          </p>
+          {pecas.length > 0 && (
+            <p className="text-xs text-neutral-400 tabular-nums">
+              {pecas.length} {pecas.length === 1 ? "item" : "itens"}
             </p>
           )}
         </div>
@@ -255,6 +273,90 @@ export default async function CarroPage({
           </ul>
         </section>
       )}
+
+      {/* Peças e itens avulsos — comprados à parte, fora do estoque de insumos */}
+      <section className="cartao p-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-sm font-medium">Peças e itens avulsos</h2>
+          {pecas.length > 0 && (
+            <span className="text-xs text-neutral-500">
+              {pecas.length} {pecas.length === 1 ? "item" : "itens"} · {money(pecasTotal)}
+            </span>
+          )}
+        </div>
+        <p className="mt-1 text-xs text-neutral-400">
+          Para-choque, farol, removedor de tinta, calafetagem, colagem de
+          parabrisa etc. — não sai do estoque de insumos, só entra na conta
+          desse carro.
+        </p>
+
+        {pecas.length > 0 && (
+          <ul className="mt-3 divide-y divide-neutral-100 text-sm dark:divide-neutral-800">
+            {pecas.map((peca) => (
+              <li key={peca.id} className="flex items-center gap-3 py-2">
+                <span className="min-w-0 flex-1 truncate">
+                  {peca.name}
+                  <span className="ml-1.5 text-xs text-neutral-400">
+                    {peca.condition === "recuperada" ? "recuperada" : "nova"}
+                  </span>
+                </span>
+                <span className="shrink-0 text-right text-xs tabular-nums text-neutral-400">
+                  {peca.estimatedValue !== null && (
+                    <span>orçado {money(peca.estimatedValue)}</span>
+                  )}
+                  {peca.estimatedValue !== null && peca.paidValue !== null && " · "}
+                  {peca.paidValue !== null && (
+                    <span className="text-neutral-600 dark:text-neutral-300">
+                      pago {money(peca.paidValue)}
+                    </span>
+                  )}
+                  {peca.estimatedValue === null && peca.paidValue === null && "—"}
+                </span>
+                <form action={removerPeca}>
+                  <input type="hidden" name="id" value={peca.id} />
+                  <input type="hidden" name="vehicleId" value={carro.id} />
+                  <button
+                    className="shrink-0 text-xs text-neutral-400 hover:text-red-600"
+                    title="Remover"
+                  >
+                    remover
+                  </button>
+                </form>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <form
+          action={adicionarPeca}
+          className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto_auto_auto_auto]"
+        >
+          <input type="hidden" name="vehicleId" value={carro.id} />
+          <input
+            name="name"
+            placeholder="Nome (ex.: Para-choque dianteiro)"
+            className="campo"
+            required
+          />
+          <input
+            name="estimatedValue"
+            inputMode="decimal"
+            placeholder="Orçado"
+            className="campo sm:w-28"
+          />
+          <input
+            name="paidValue"
+            inputMode="decimal"
+            placeholder="Pago"
+            className="campo sm:w-28"
+          />
+          <select name="condition" className="campo sm:w-32" defaultValue="nova">
+            <option value="nova">Nova</option>
+            <option value="recuperada">Recuperada</option>
+          </select>
+          <button className="botao-claro">Adicionar</button>
+        </form>
+      </section>
 
       {/* Cadastro */}
       <details className="cartao p-4">

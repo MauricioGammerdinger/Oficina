@@ -13,36 +13,32 @@ prazo. Vou marcando conforme for implementando.
       de telefone junto, no cadastro, na edição e mostrado na ficha do
       carro.
 
-## 2. Custo de peças no carro — claro, tamanho médio
+## 2. Custo de peças no carro — ✅ feito
 
 Vem dos áudios 2, 3, 4 e 11. Quando é serviço de "recuperar e pintar" e troca
 uma peça, o valor da peça em si **não** vem do estoque de insumos dela — é
-comprada à parte pro carro. Hoje isso não entra em lugar nenhum do sistema.
-O que ela pediu, juntando os trechos:
+comprada à parte pro carro. Ela respondeu as perguntas de implementação por
+escrito (`Pendencias-Controle-da-Oficina.pdf` / `Perguntas-para-Cannabis.pdf`)
+e ficou assim:
 
-- [ ] Um jeito de lançar, por carro, o **valor gasto em peça** — pra entrar
-      na conta de material gasto / margem junto com os insumos (áudio 11:
-      "no total de material... e as peças, o quanto gastou de peças").
-- [ ] Também guardar o **valor previsto/orçado** da peça (particular ou o
-      valor total que vem no orçamento da seguradora), pra comparar previsto
-      x gasto e ver se teve lucro (áudio 4).
-- [ ] Opcional, mas ela distingue bastante isso ao falar: talvez marcar se a
-      peça é **genuína, paralela ou usada** — peça usada tem custo extra de
-      preparo (removedor, wash primer, funilaria), mas esse custo extra ela
-      já sabe lançar como insumo normal, não precisa de campo novo pra isso.
-- [ ] Explicitamente NÃO é pra controlar estoque de peça — isso é dos
-      estoques separados do pai dela (peças pra usar) e do Rodrigão (peças
-      pra vender), cada um no controle deles. Ela só quer o **gasto**
-      refletido no carro.
+- [x] Lançamento por carro, peça por peça (com nome de cada uma) — não só
+      um valor somado. Nova seção "Peças e itens avulsos" na ficha do carro.
+- [x] Guarda valor previsto/orçado separado do valor pago, pra comparar os
+      dois.
+- [x] Marcar genuína/paralela/usada: ela disse que não precisa ("mta
+      coisa") — não implementado, de propósito.
+- [x] Nos relatórios/resumo do carro, "Material" e "Peças" aparecem como
+      duas linhas separadas, como ela pediu.
+- [x] Bônus que ela comentou de graça — remoção de tinta antiga (~R$50 por
+      uso), calafetagem, colagem de parabrisa — cabem na mesma lista de
+      peças/itens avulsos, cada um só com nome + valor.
+- [x] Continua sem controle de estoque de peça — só o gasto entra na conta
+      do carro, como combinado.
 
-## 3. Mão de obra por hora, por peça — ideia em aberto
+## 3. Mão de obra por hora, por peça — descartado, ela mesma decidiu
 
-Vem dos áudios 1 e 2. Orçamentos de seguradora mostram horas de recuperação
-cobradas detalhadas por peça. Ela queria padronizar isso na oficina também.
-
-- [ ] **Não é pedido fechado ainda** — ela disse explicitamente que precisa
-      conversar com o pai antes de decidir se/como padronizar isso. Não
-      encarar sem confirmar com ela que já bateu esse papo.
+Vem dos áudios 1 e 2. Ela bateu o papo com o pai e decidiu não seguir com
+isso: "só as peças gastas e material está bom". Não vira funcionalidade.
 
 ## 4. Estoque por lote (FIFO) — ✅ feito
 
@@ -68,28 +64,24 @@ Vem do áudio 7, com exemplo numérico bem específico:
       do lote consumido em vez do preço mais recente — inclusive pro
       histórico já lançado antes dessa mudança, que foi recalculado.
 
-## 5. Consumo padrão x real de itens não lançados por carro
+## 5. Consumo padrão x real de itens não lançados por carro — ✅ feito (a parte que ela pediu)
 
-Vem principalmente do áudio 8 (reforçado por uma frase solta no áudio 4).
-Reli esse trecho de novo com calma porque na primeira vez passei batido em
-um detalhe importante: não é (só) sobre comparar a receita de um serviço com
-o que saiu num carro específico — isso já existe e funciona bem. O ponto novo
-é outro: tem insumo (lixa, massa) que sai do estoque **em lote pra vários
-carros ao mesmo tempo** (ela entrega a caixa de lixa inteira pro time, não
-lança quanto foi pra cada carro). Nesses casos ela não consegue saber se o
-consumo bateu o esperado olhando carro por carro — o jeito que ela pensa
-nisso é agregado: "saíram 100 lixas nesse período, quantos carros passaram,
-isso bate com o padrão que eu esperava por carro?"
+Vem principalmente do áudio 8 (reforçado por uma frase solta no áudio 4). Ela
+respondeu por escrito e confirmou: não quer comparação exata por carro
+individual — só uma noção agregada, tipo "quantas lixas pra quantos carros".
 
-- [ ] Um lugar pra registrar um **padrão esperado de consumo** (ex.: "cada
-      carro recuperado gasta em média X lixas / Y massa"), pra depois
-      comparar com o que realmente saiu do estoque num período e o número de
-      carros atendidos — ajuda ela a decidir quando e quanto repor.
-- [ ] Ela também falou, à parte (áudio 4), em poder "cadastrar insumos
-      padrão que eu acho que era pra ter gastado nesse carro" — o que sugere
-      que às vezes ela também quer essa comparação por carro individual,
-      não só agregada. Vale perguntar direto pra ela qual das duas visões
-      (ou as duas) resolve melhor antes de implementar.
+- [x] Confirmou que lançar insumo em lote (lixa, massa) sem vincular a um
+      carro está bom, e que o relatório "insumos que mais saíram" já
+      resolvia a parte agregada — sem precisar criar nada novo aí.
+- [x] O que faltava: mostrar, junto com esse relatório, quantos carros
+      tiveram material lançado no período e quantas peças foram feitas
+      (novas x recuperadas) — pra ela ter a régua pra comparar. Adicionado
+      em Relatórios, ao lado de "Insumos que mais saíram".
+- [ ] Não implementado (ela não pediu): um número de referência
+      cadastrado no sistema tipo "1 lixa por peça, 2 se for capô" — ela deu
+      esse contexto pra explicar a régua dela, mas o pedido concreto era só
+      a contagem de carros/peças acima. Se um dia ela quiser formalizar
+      esse padrão dentro do sistema, é um pedido novo.
 
 ## 6. Imprimir a lista de contagem — claro, simples ✅ feito
 
@@ -103,8 +95,9 @@ falasse na hora).
 ## Contexto, sem pedido — só pra lembrar
 
 - Áudio 3: ela disse que ia me mostrar depois como lê os orçamentos da
-  seguradora e como calculam/enviam os orçamentos deles. Ainda não recebi
-  isso — pode ser relevante pros itens 2 e 3 acima quando ela mandar.
+  seguradora e como calculam/enviam os orçamentos deles. Perguntei de novo
+  por escrito e ela não lembrava de ter prometido isso e não sabe se pode
+  compartilhar um orçamento real — continua em aberto, sem cobrar dela.
 
 ## Sem ação necessária (elogios / ela mesma já resolveu)
 

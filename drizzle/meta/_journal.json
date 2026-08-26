@@ -43,6 +43,13 @@
       "when": 1787350096031,
       "tag": "0005_optimal_marvex",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1787787451930,
+      "tag": "0006_soft_dazzler",
+      "breakpoints": true
     }
   ]
 }

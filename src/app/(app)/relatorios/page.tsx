@@ -1,5 +1,6 @@
 import { money, qty } from "@/lib/parse";
 import {
+  getAtividadePeriodo,
   getComparativoFornecedores,
   getGastoComprasPorMes,
   getPerdaContagens,
@@ -13,12 +14,13 @@ const dataCurta = (iso: string) =>
   new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
 
 export default async function RelatoriosPage() {
-  const [resumo, gastoPorMes, topConsumo, perda, fornecedores] = await Promise.all([
+  const [resumo, gastoPorMes, topConsumo, perda, fornecedores, atividade] = await Promise.all([
     getResumoNegocio(),
     getGastoComprasPorMes(6),
     getTopConsumo(30, 6),
     getPerdaContagens(),
     getComparativoFornecedores(),
+    getAtividadePeriodo(30),
   ]);
 
   const maiorGasto = Math.max(1, ...gastoPorMes.map((m) => m.total));
@@ -142,9 +144,14 @@ export default async function RelatoriosPage() {
 
       {/* --- top consumo --- */}
       <section className="cartao p-4">
-        <h2 className="text-sm font-semibold">
-          Insumos que mais saíram (últimos 30 dias)
-        </h2>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-sm font-semibold">
+            Insumos que mais saíram (últimos 30 dias)
+          </h2>
+          <span className="text-xs text-neutral-500" title="Carros com material lançado nos últimos 30 dias">
+            {atividade.carros} {atividade.carros === 1 ? "carro" : "carros"} no período
+          </span>
+        </div>
         {topConsumo.length === 0 ? (
           <p className="mt-2 text-sm text-neutral-500">
             Nenhuma saída de estoque nos últimos 30 dias.
@@ -169,6 +176,20 @@ export default async function RelatoriosPage() {
             ))}
           </div>
         )}
+        <p className="mt-3 text-xs text-neutral-400">
+          Pra bater o olho se o consumo em lote (ex.: lixa entregue pro time
+          sem vincular a um carro) está dentro do esperado: use os{" "}
+          {atividade.carros} {atividade.carros === 1 ? "carro" : "carros"} acima
+          como referência de escala. Peças feitas no período:{" "}
+          <strong className="text-neutral-600 dark:text-neutral-300">
+            {atividade.pecasNovas} {atividade.pecasNovas === 1 ? "nova" : "novas"}
+          </strong>{" "}
+          ·{" "}
+          <strong className="text-neutral-600 dark:text-neutral-300">
+            {atividade.pecasRecuperadas} {atividade.pecasRecuperadas === 1 ? "recuperada" : "recuperadas"}
+          </strong>
+          .
+        </p>
       </section>
 
       {/* --- perda por contagem --- */}

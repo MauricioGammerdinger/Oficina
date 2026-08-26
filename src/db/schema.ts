@@ -104,6 +104,33 @@ export const vehicles = pgTable("vehicles", {
     .defaultNow(),
 });
 
+/**
+ * Peças e itens avulsos comprados à parte pro carro (não vêm do estoque de
+ * insumos): para-choque, farol, removedor de tinta, calafetagem, colagem
+ * de parabrisa etc. Cada linha é só um nome + valor — sem controle de
+ * estoque de peça, que é combinado que fica de fora do sistema.
+ */
+export const vehicleParts = pgTable(
+  "vehicle_parts",
+  {
+    id: serial("id").primaryKey(),
+    vehicleId: integer("vehicle_id")
+      .notNull()
+      .references(() => vehicles.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    /** Valor previsto/orçado (ex.: o que a seguradora aprovou) */
+    estimatedValue: doublePrecision("estimated_value"),
+    /** Valor que realmente foi pago pela peça */
+    paidValue: doublePrecision("paid_value"),
+    /** nova | recuperada — usada/reaproveitada */
+    condition: text("condition").notNull().default("nova"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("vehicle_parts_vehicle_idx").on(table.vehicleId)]
+);
+
 /** Checklist: quais serviços vão ser feitos nesse carro */
 export const vehicleServices = pgTable(
   "vehicle_services",
