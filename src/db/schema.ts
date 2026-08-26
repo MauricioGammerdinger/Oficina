@@ -124,6 +124,8 @@ export const vehicleParts = pgTable(
     paidValue: doublePrecision("paid_value"),
     /** nova | recuperada — usada/reaproveitada */
     condition: text("condition").notNull().default("nova"),
+    /** genuina | paralela | usada — opcional, fica em branco se não informar */
+    origin: text("origin"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

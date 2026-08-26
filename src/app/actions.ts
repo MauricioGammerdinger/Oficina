@@ -484,6 +484,8 @@ export async function adicionarPeca(formData: FormData) {
   const condition = String(formData.get("condition")) === "recuperada" ? "recuperada" : "nova";
   const estimatedValue = parseNum(formData.get("estimatedValue"));
   const paidValue = parseNum(formData.get("paidValue"));
+  const originRaw = String(formData.get("origin") ?? "");
+  const origin = ["genuina", "paralela", "usada"].includes(originRaw) ? originRaw : null;
 
   await db.insert(vehicleParts).values({
     vehicleId,
@@ -491,6 +493,7 @@ export async function adicionarPeca(formData: FormData) {
     estimatedValue: estimatedValue > 0 ? estimatedValue : null,
     paidValue: paidValue > 0 ? paidValue : null,
     condition,
+    origin,
   });
 
   revalidatePath(`/carros/${vehicleId}`);

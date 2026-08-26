@@ -1,0 +1,1 @@
+ALTER TABLE "vehicle_parts" ADD COLUMN "origin" text;

@@ -27,6 +27,12 @@ const statusOpcoes = [
   { valor: "concluido", rotulo: "Concluído" },
 ];
 
+const rotuloOrigem: Record<string, string> = {
+  genuina: "genuína",
+  paralela: "paralela",
+  usada: "usada",
+};
+
 export default async function CarroPage({
   params,
 }: {
@@ -298,6 +304,7 @@ export default async function CarroPage({
                   {peca.name}
                   <span className="ml-1.5 text-xs text-neutral-400">
                     {peca.condition === "recuperada" ? "recuperada" : "nova"}
+                    {peca.origin && ` · ${rotuloOrigem[peca.origin] ?? peca.origin}`}
                   </span>
                 </span>
                 <span className="shrink-0 text-right text-xs tabular-nums text-neutral-400">
@@ -329,7 +336,7 @@ export default async function CarroPage({
 
         <form
           action={adicionarPeca}
-          className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto_auto_auto_auto]"
+          className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto_auto_auto_auto_auto]"
         >
           <input type="hidden" name="vehicleId" value={carro.id} />
           <input
@@ -353,6 +360,12 @@ export default async function CarroPage({
           <select name="condition" className="campo sm:w-32" defaultValue="nova">
             <option value="nova">Nova</option>
             <option value="recuperada">Recuperada</option>
+          </select>
+          <select name="origin" className="campo sm:w-36" defaultValue="">
+            <option value="">Tipo (opcional)</option>
+            <option value="genuina">Genuína</option>
+            <option value="paralela">Paralela</option>
+            <option value="usada">Usada</option>
           </select>
           <button className="botao-claro">Adicionar</button>
         </form>

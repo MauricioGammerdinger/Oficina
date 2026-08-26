@@ -175,12 +175,15 @@ await page.fill('input[name="name"]', "Para-choque dianteiro");
 await page.fill('input[name="estimatedValue"]', "500");
 await page.fill('input[name="paidValue"]', "430");
 await page.selectOption('select[name="condition"]', "recuperada");
+await page.selectOption('select[name="origin"]', "paralela");
 await page.click('button:has-text("Adicionar")');
 await page.waitForSelector("text=Para-choque dianteiro", { timeout: 15000 });
 const comPeca = await page.locator("main").innerText();
 if (/Para-choque dianteiro/.test(comPeca) && /recuperada/.test(comPeca))
   ok("peça avulsa aparece na ficha do carro");
 else bad("peça avulsa não apareceu");
+if (/paralela/.test(comPeca)) ok("tipo da peça (genuína/paralela/usada) aparece na ficha");
+else bad("tipo da peça não apareceu");
 
 const resumoComPeca = await page
   .locator("section", { hasText: "Cobrado" })

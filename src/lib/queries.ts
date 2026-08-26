@@ -243,6 +243,8 @@ export type VehiclePartRow = {
   estimatedValue: number | null;
   paidValue: number | null;
   condition: string;
+  /** genuina | paralela | usada | null — opcional */
+  origin: string | null;
 };
 
 /** Peças/itens avulsos lançados nesse carro (para-choque, farol, removedor de tinta, etc.) */
@@ -252,7 +254,7 @@ export async function getVehicleParts(vehicleId: number): Promise<VehiclePartRow
       id, name,
       estimated_value as "estimatedValue",
       paid_value      as "paidValue",
-      condition
+      condition, origin
     from vehicle_parts
     where vehicle_id = ${vehicleId}
     order by id
@@ -263,6 +265,7 @@ export async function getVehicleParts(vehicleId: number): Promise<VehiclePartRow
     estimatedValue: r.estimatedValue === null ? null : num(r.estimatedValue),
     paidValue: r.paidValue === null ? null : num(r.paidValue),
     condition: String(r.condition),
+    origin: r.origin === null ? null : String(r.origin),
   }));
 }
 
