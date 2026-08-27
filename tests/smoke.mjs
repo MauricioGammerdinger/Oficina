@@ -264,6 +264,21 @@ if (/(^|\D)3(\D|$)/.test(sistemaAgora))
   ok("ajuste da contagem acertou o saldo (9,5 -> 3)");
 else bad(`saldo após ajuste: ${sistemaAgora.replace(/\n/g, " | ")}`);
 
+// cancela a contagem aberta (essa segunda, ainda não fechada)
+await page.click('button:has-text("cancelar essa contagem")');
+await page.waitForLoadState("networkidle");
+if (await page.locator('button:has-text("Começar uma contagem")').count())
+  ok("cancelar contagem aberta funciona");
+else bad("contagem cancelada continuou aberta");
+
+// apaga a contagem já fechada do histórico
+const tinhaHistorico = /Contagens anteriores/.test(await page.locator("main").innerText());
+await page.click('button:has-text("apagar")');
+await page.locator("text=Contagens anteriores").waitFor({ state: "detached", timeout: 10000 }).catch(() => {});
+if (tinhaHistorico && !/Contagens anteriores/.test(await page.locator("main").innerText()))
+  ok("apagar contagem do histórico funciona");
+else bad("contagem do histórico não sumiu depois de apagar");
+
 // --- relatórios
 await page.goto(`${base}/relatorios`);
 const relTxt = await page.locator("main").innerText();

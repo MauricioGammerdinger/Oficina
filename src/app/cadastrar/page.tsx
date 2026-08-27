@@ -7,8 +7,6 @@ const MENSAGENS: Record<string, string> = {
   senhaCurta: "A senha precisa ter pelo menos 6 letras/números.",
   senhaDiferente: "As duas senhas digitadas não são iguais.",
   codigoCurto: "O código de recuperação precisa ter pelo menos 4 letras/números.",
-  semConvite:
-    "Esse email ainda não foi liberado pra criar conta. Pede pra quem administra o sistema te convidar primeiro.",
   jaExiste: "Já existe uma conta com esse email — tenta entrar em vez de cadastrar.",
 };
 
@@ -31,8 +29,9 @@ export default async function CadastrarPage({
         <div className="p-6 sm:p-8">
           <h1 className="text-xl font-semibold">Criar conta</h1>
           <p className="mb-6 mt-1 text-sm text-neutral-500">
-            Só funciona se o seu email já foi liberado por quem administra o
-            Controle da Oficina.
+            Depois de criar, sua conta fica aguardando aprovação — só
+            funciona depois que quem administra o Controle da Oficina
+            liberar o acesso.
           </p>
 
           <form action={cadastrar} className="space-y-3">
@@ -107,7 +106,7 @@ export default async function CadastrarPage({
                 {MENSAGENS[erro] ?? "Não deu pra criar a conta. Confere os dados."}
               </p>
             )}
-            <button className="botao w-full">Criar conta e entrar</button>
+            <button className="botao w-full">Criar conta</button>
           </form>
 
           <p className="mt-4 text-center text-xs text-neutral-400">

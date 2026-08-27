@@ -7,7 +7,6 @@ import { revalidatePath } from "next/cache";
 
 import { db } from "@/db";
 import {
-  allowedSignupEmails,
   countItems,
   counts,
   products,
@@ -60,9 +59,10 @@ export async function entrar(formData: FormData) {
   // qualquer), pra não dar mais rápido pra descobrir emails sem conta.
   const senhaOk = await verifyPassword(senha, user?.passwordHash ?? HASH_FALSO);
 
-  if (!user || !user.active || !senhaOk) {
-    redirect("/entrar?erro=1");
-  }
+  if (!user || !senhaOk) redirect("/entrar?erro=1");
+  // Conta existe e a senha está certa, mas ainda não foi aprovada (ou foi
+  // desativada por um admin) — mensagem diferente da de senha errada.
+  if (!user.active) redirect("/entrar?erro=pendente");
 
   await abrirSessaoPara(user.id);
   redirect("/estoque");
@@ -70,6 +70,12 @@ export async function entrar(formData: FormData) {
 
 /* ---------------------------------------------------------------- cadastro */
 
+/**
+ * Qualquer pessoa pode criar conta — não tem mais convite prévio por
+ * email. Em compensação a conta nasce desativada (active: false) e só
+ * funciona depois que um admin aprova em Usuários, então não dá pra
+ * entrar sem alguém de confiança liberar.
+ */
 export async function cadastrar(formData: FormData) {
   const email = normalizarEmail(String(formData.get("email") ?? ""));
   const name = parseStr(formData.get("name")) ?? "";
@@ -82,12 +88,6 @@ export async function cadastrar(formData: FormData) {
   if (senha !== confirmarSenha) redirect("/cadastrar?erro=senhaDiferente");
   if (codigoRecuperacao.length < 4) redirect("/cadastrar?erro=codigoCurto");
 
-  const [convite] = await db
-    .select({ id: allowedSignupEmails.id })
-    .from(allowedSignupEmails)
-    .where(eq(allowedSignupEmails.email, email));
-  if (!convite) redirect("/cadastrar?erro=semConvite");
-
   const [existente] = await db
     .select({ id: users.id })
     .from(users)
@@ -98,13 +98,11 @@ export async function cadastrar(formData: FormData) {
     hashPassword(senha),
     hashPassword(codigoRecuperacao),
   ]);
-  const [criado] = await db
+  await db
     .insert(users)
-    .values({ email, name, passwordHash, recoveryCodeHash })
-    .returning({ id: users.id });
+    .values({ email, name, passwordHash, recoveryCodeHash, active: false });
 
-  await abrirSessaoPara(criado.id);
-  redirect("/estoque");
+  redirect("/entrar?cadastrada=1");
 }
 
 /* -------------------------------------------------------- esqueci a senha */
@@ -149,27 +147,6 @@ async function exigirAdmin() {
   const usuario = await getUsuarioLogado();
   if (!usuario?.isAdmin) throw new Error("Só administradores podem fazer isso.");
   return usuario;
-}
-
-export async function convidarEmail(formData: FormData) {
-  await exigirAdmin();
-  const email = normalizarEmail(String(formData.get("email") ?? ""));
-  if (!email) return;
-  const note = parseStr(formData.get("note"));
-
-  await db
-    .insert(allowedSignupEmails)
-    .values({ email, note })
-    .onConflictDoNothing();
-
-  revalidatePath("/admin");
-}
-
-export async function removerConvite(formData: FormData) {
-  await exigirAdmin();
-  const id = parseId(formData.get("id"));
-  await db.delete(allowedSignupEmails).where(eq(allowedSignupEmails.id, id));
-  revalidatePath("/admin");
 }
 
 export async function resetarSenhaUsuario(formData: FormData) {

@@ -1,12 +1,10 @@
 import { redirect } from "next/navigation";
 import {
   alternarUsuarioAtivo,
-  convidarEmail,
   definirCodigoRecuperacao,
-  removerConvite,
   resetarSenhaUsuario,
 } from "@/app/actions";
-import { getConvites, getUsers } from "@/lib/queries";
+import { getUsers } from "@/lib/queries";
 import { getUsuarioLogado } from "@/lib/sessao";
 
 export const dynamic = "force-dynamic";
@@ -15,72 +13,49 @@ export default async function AdminPage() {
   const usuario = await getUsuarioLogado();
   if (!usuario?.isAdmin) redirect("/estoque");
 
-  const [users, convites] = await Promise.all([getUsers(), getConvites()]);
-  const pendentes = convites.filter((c) => !c.usado);
+  const users = await getUsers();
+  const pendentes = users.filter((u) => !u.active);
 
   return (
     <main className="space-y-5">
       <div>
         <h1 className="text-lg font-semibold">Usuários e acessos</h1>
         <p className="mt-1 text-sm text-neutral-500">
-          Convide quem pode criar conta, veja quem já tem acesso, e resete a
+          Qualquer um pode criar conta na tela de cadastro, mas ela só
+          funciona depois que você aprova aqui. Também dá pra resetar a
           senha de alguém se esquecer.
         </p>
       </div>
 
-      {/* Convidar */}
-      <section className="cartao p-4">
-        <h2 className="text-sm font-medium">Convidar alguém</h2>
-        <p className="mt-1 text-xs text-neutral-500">
-          A pessoa só consegue criar conta se o email dela estiver aqui.
-        </p>
-        <form
-          action={convidarEmail}
-          className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_auto]"
-        >
-          <input
-            name="email"
-            type="email"
-            placeholder="email@exemplo.com"
-            className="campo"
-            required
-          />
-          <input name="note" placeholder="Nome (opcional, pra lembrar)" className="campo" />
-          <button className="botao">Convidar</button>
-        </form>
-      </section>
-
-      {/* Convites pendentes */}
+      {/* Pendentes de aprovação */}
       {pendentes.length > 0 && (
-        <section className="cartao overflow-hidden">
-          <div className="border-b border-neutral-200 bg-neutral-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:border-neutral-800 dark:bg-neutral-900">
-            Convidados, ainda sem conta
+        <section className="cartao overflow-hidden border-amber-300 dark:border-amber-900">
+          <div className="border-b border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400">
+            Aguardando aprovação
           </div>
-          {pendentes.map((c) => (
+          {pendentes.map((u) => (
             <div
-              key={c.id}
+              key={u.id}
               className="flex items-center gap-3 border-b border-neutral-100 px-3 py-2.5 last:border-0 dark:border-neutral-800"
             >
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm">{c.email}</span>
-                {c.note && (
-                  <span className="block truncate text-xs text-neutral-400">
-                    {c.note}
-                  </span>
-                )}
+                <span className="block truncate text-sm font-medium">
+                  {u.name}
+                </span>
+                <span className="block truncate text-xs text-neutral-400">
+                  {u.email}
+                </span>
               </span>
-              <form action={removerConvite}>
-                <input type="hidden" name="id" value={c.id} />
-                <button className="text-xs text-neutral-400 hover:text-red-600">
-                  cancelar convite
-                </button>
+              <form action={alternarUsuarioAtivo}>
+                <input type="hidden" name="id" value={u.id} />
+                <button className="botao-claro">Aprovar acesso</button>
               </form>
             </div>
           ))}
         </section>
       )}
 
-      {/* Contas ativas */}
+      {/* Contas */}
       <section className="cartao overflow-hidden">
         <div className="border-b border-neutral-200 bg-neutral-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:border-neutral-800 dark:bg-neutral-900">
           Contas

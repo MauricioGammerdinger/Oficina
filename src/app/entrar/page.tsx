@@ -5,9 +5,9 @@ import { IlustracaoOficina } from "@/components/ilustracao-oficina";
 export default async function EntrarPage({
   searchParams,
 }: {
-  searchParams: Promise<{ erro?: string; recuperada?: string }>;
+  searchParams: Promise<{ erro?: string; recuperada?: string; cadastrada?: string }>;
 }) {
-  const { erro, recuperada } = await searchParams;
+  const { erro, recuperada, cadastrada } = await searchParams;
 
   return (
     <main className="mx-auto flex min-h-screen max-w-4xl items-center px-4 py-8 sm:px-6">
@@ -25,6 +25,12 @@ export default async function EntrarPage({
           {recuperada && (
             <p className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
               Senha trocada! Já pode entrar com a senha nova.
+            </p>
+          )}
+          {cadastrada && (
+            <p className="mb-3 rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-700 dark:bg-blue-950 dark:text-blue-400">
+              Conta criada! Ela fica aguardando aprovação — avisa quem
+              administra o sistema pra liberar seu acesso.
             </p>
           )}
 
@@ -54,7 +60,14 @@ export default async function EntrarPage({
                 className="campo"
               />
             </div>
-            {erro && (
+            {erro === "pendente" && (
+              <p className="text-sm text-amber-600">
+                Sua conta ainda está aguardando aprovação (ou foi
+                desativada). Pede pra quem administra o sistema liberar seu
+                acesso em Usuários.
+              </p>
+            )}
+            {erro === "1" && (
               <p className="text-sm text-red-600">
                 Email ou senha incorretos. Tenta de novo.
               </p>
@@ -72,7 +85,7 @@ export default async function EntrarPage({
           </p>
 
           <p className="mt-3 text-center text-xs text-neutral-400">
-            Foi convidado(a) e ainda não tem conta?{" "}
+            Ainda não tem conta?{" "}
             <Link href="/cadastrar" className="underline hover:text-neutral-600">
               Criar conta
             </Link>

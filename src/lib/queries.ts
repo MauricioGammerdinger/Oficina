@@ -703,28 +703,3 @@ export async function getUsers(): Promise<UserRow[]> {
   }));
 }
 
-export type ConviteRow = {
-  id: number;
-  email: string;
-  note: string | null;
-  createdAt: string;
-  usado: boolean;
-};
-
-/** Convites pendentes + já usados (pra saber quem já entrou de quem falta). */
-export async function getConvites(): Promise<ConviteRow[]> {
-  const { rows } = await db.execute(sql`
-    select
-      c.id, c.email, c.note, c.created_at as "createdAt",
-      exists(select 1 from users u where u.email = c.email) as usado
-    from allowed_signup_emails c
-    order by c.created_at
-  `);
-  return rows.map((r) => ({
-    id: num(r.id),
-    email: String(r.email),
-    note: r.note === null ? null : String(r.note),
-    createdAt: String(r.createdAt),
-    usado: Boolean(r.usado),
-  }));
-}

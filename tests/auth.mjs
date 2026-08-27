@@ -62,36 +62,11 @@ const linkAdmin = page.locator('a[href="/admin"]');
 if (await linkAdmin.count()) ok("link de admin aparece pra admin");
 else bad("link de admin não apareceu");
 
-// --- convida um email novo
-await page.goto(`${base}/admin`);
-await page.locator('input[name="email"]').fill("cannabis@teste.com");
-await page.locator('input[name="note"]').fill("Cannabis");
-await Promise.all([
-  page.waitForLoadState("networkidle"),
-  page.locator('button:has-text("Convidar")').click(),
-]);
-await page.waitForTimeout(500);
-const textoAdmin = await page.locator("main").innerText();
-if (textoAdmin.includes("cannabis@teste.com")) ok("convite aparece na lista");
-else bad(`convite não apareceu: ${textoAdmin.slice(0, 300)}`);
-
 await page.close();
 
-// --- tenta se cadastrar com email NÃO convidado -> deve barrar
+// --- qualquer um pode se cadastrar sem convite prévio, mas a conta nasce
+// aguardando aprovação (não loga sozinha)
 const page2 = await browser.newPage();
-await page2.goto(`${base}/cadastrar`);
-await page2.locator('input[name="name"]').fill("Intruso");
-await page2.locator('input[name="email"]').fill("intruso@teste.com");
-await page2.locator('input[name="senha"]').fill("qualquer123");
-await page2.locator('input[name="confirmarSenha"]').fill("qualquer123");
-await page2.locator('input[name="codigoRecuperacao"]').fill("codigo123");
-await Promise.all([
-  page2.waitForURL(/erro=semConvite/),
-  page2.locator('button:has-text("Criar conta")').click(),
-]);
-ok("cadastro sem convite foi barrado");
-
-// --- cadastra com o email convidado -> deve funcionar
 await page2.goto(`${base}/cadastrar`);
 await page2.locator('input[name="name"]').fill("Cannabis");
 await page2.locator('input[name="email"]').fill("cannabis@teste.com");
@@ -99,10 +74,54 @@ await page2.locator('input[name="senha"]').fill("senhadacannabis");
 await page2.locator('input[name="confirmarSenha"]').fill("senhadacannabis");
 await page2.locator('input[name="codigoRecuperacao"]').fill("codigosecreto");
 await Promise.all([
-  page2.waitForURL(/\/estoque/),
+  page2.waitForURL(/\/entrar\?cadastrada=1/),
   page2.locator('button:has-text("Criar conta")').click(),
 ]);
-ok("cadastro com convite funcionou e já logou");
+ok("cadastro sem convite funcionou (e não logou direto)");
+
+// --- tenta logar antes de ser aprovada -> deve barrar com erro=pendente
+await page2.locator('input[name="email"]').fill("cannabis@teste.com");
+await page2.locator('input[name="senha"]').fill("senhadacannabis");
+await Promise.all([
+  page2.waitForURL(/erro=pendente/),
+  page2.locator('button:has-text("Entrar")').click(),
+]);
+ok("conta pendente não consegue entrar antes da aprovação");
+
+// --- admin aprova a conta pendente
+const pageAdmin2 = await browser.newPage();
+await pageAdmin2.goto(`${base}/entrar`);
+await pageAdmin2.locator('input[name="email"]').fill(adminEmail);
+await pageAdmin2.locator('input[name="senha"]').fill(adminSenha);
+await Promise.all([
+  pageAdmin2.waitForURL(/\/estoque/),
+  pageAdmin2.locator('button:has-text("Entrar")').click(),
+]);
+await pageAdmin2.goto(`${base}/admin`);
+const textoAdmin = await pageAdmin2.locator("main").innerText();
+if (
+  textoAdmin.toLowerCase().includes("aguardando aprovação") &&
+  textoAdmin.includes("cannabis@teste.com")
+) {
+  ok("conta pendente aparece pro admin aprovar");
+} else {
+  bad(`seção de pendentes não apareceu como esperado: ${textoAdmin.slice(0, 300)}`);
+}
+await Promise.all([
+  pageAdmin2.waitForLoadState("networkidle"),
+  pageAdmin2.locator('button:has-text("Aprovar acesso")').click(),
+]);
+await pageAdmin2.close();
+
+// --- depois de aprovada, consegue entrar
+await page2.goto(`${base}/entrar`);
+await page2.locator('input[name="email"]').fill("cannabis@teste.com");
+await page2.locator('input[name="senha"]').fill("senhadacannabis");
+await Promise.all([
+  page2.waitForURL(/\/estoque/),
+  page2.locator('button:has-text("Entrar")').click(),
+]);
+ok("conta aprovada consegue entrar");
 
 // --- vê os MESMOS dados que o admin via (dado compartilhado, não por conta)
 await page2.goto(`${base}/estoque`);
