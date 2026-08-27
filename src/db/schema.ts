@@ -204,8 +204,10 @@ export const users = pgTable(
      * funciona pra essa conta.
      */
     recoveryCodeHash: text("recovery_code_hash"),
-    /** Administrador: pode convidar gente nova e resetar senha de alguém. */
+    /** Administrador: pode aprovar contas novas e resetar senha de alguém. */
     isAdmin: boolean("is_admin").notNull().default(false),
+    // Nasce false pro cadastro público (aguardando aprovação); um admin
+    // desativado usa o mesmo campo, com o mesmo efeito (não loga).
     active: boolean("active").notNull().default(true),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -215,9 +217,11 @@ export const users = pgTable(
 );
 
 /**
- * Lista de convites: só quem tem o email aqui consegue se cadastrar.
- * Cadastro é fechado de propósito — sem isso, qualquer um com o link do
- * site poderia criar uma conta sozinho.
+ * Tabela sem uso hoje — cadastro era fechado por convite prévio (só quem
+ * tinha o email aqui conseguia criar conta). Trocado por cadastro aberto +
+ * aprovação de admin (ver `active` em users e `cadastrar`/`alternarUsuarioAtivo`
+ * em actions.ts). Deixada no schema pra não precisar de migração só pra
+ * isso; pode ser removida numa limpeza futura.
  */
 export const allowedSignupEmails = pgTable(
   "allowed_signup_emails",
