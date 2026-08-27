@@ -1,0 +1,47 @@
+name: Backup do banco de produção
+
+# Roda sozinho toda semana (domingo de madrugada) e guarda um dump do banco
+# de produção como artefato do GitHub — assim, se algo der muito errado e
+# passar da janela de 6h que o Neon oferece de graça, ainda dá pra
+# recuperar de uma cópia (até 90 dias pra trás, um por semana).
+#
+# Também dá pra rodar na mão a qualquer momento: aba "Actions" no GitHub,
+# escolhe "Backup do banco de produção" e clica em "Run workflow".
+#
+# Precisa de um secret chamado PROD_DATABASE_URL configurado no repositório
+# (Settings → Secrets and variables → Actions → New repository secret) com
+# a connection string de produção do Neon. Sem isso o job falha.
+
+on:
+  schedule:
+    - cron: "0 6 * * 0" # domingo, 06:00 UTC (~03:00 no horário de Brasília)
+  workflow_dispatch:
+
+jobs:
+  backup:
+    name: Gerar e guardar o backup
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Instalar o cliente do Postgres
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Gerar o dump do banco
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "Falta configurar o secret PROD_DATABASE_URL no repositório (Settings > Secrets and variables > Actions)."
+            exit 1
+          fi
+          data=$(date +%Y-%m-%d)
+          pg_dump "$DATABASE_URL" --no-owner --no-privileges > "backup-$data.sql"
+          gzip "backup-$data.sql"
+          echo "ARQUIVO=backup-$data.sql.gz" >> "$GITHUB_ENV"
+
+      - name: Guardar como artefato (fica disponível por 90 dias)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARQUIVO }}
+          path: ${{ env.ARQUIVO }}
+          retention-days: 90
