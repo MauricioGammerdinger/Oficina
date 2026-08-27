@@ -196,6 +196,14 @@ export const users = pgTable(
     email: text("email").notNull(),
     name: text("name").notNull(),
     passwordHash: text("password_hash").notNull(),
+    /**
+     * Hash do código de recuperação (mesmo formato do passwordHash) — quem
+     * sabe email + esse código consegue trocar a própria senha sozinho, sem
+     * precisar de admin nem de email de verdade. Fica nulo até a pessoa (ou
+     * um admin) definir um; sem código definido, "esqueci minha senha" não
+     * funciona pra essa conta.
+     */
+    recoveryCodeHash: text("recovery_code_hash"),
     /** Administrador: pode convidar gente nova e resetar senha de alguém. */
     isAdmin: boolean("is_admin").notNull().default(false),
     active: boolean("active").notNull().default(true),

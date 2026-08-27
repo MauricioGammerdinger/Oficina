@@ -6,6 +6,7 @@ const MENSAGENS: Record<string, string> = {
   dados: "Preenche o nome e o email.",
   senhaCurta: "A senha precisa ter pelo menos 6 letras/números.",
   senhaDiferente: "As duas senhas digitadas não são iguais.",
+  codigoCurto: "O código de recuperação precisa ter pelo menos 4 letras/números.",
   semConvite:
     "Esse email ainda não foi liberado pra criar conta. Pede pra quem administra o sistema te convidar primeiro.",
   jaExiste: "Já existe uma conta com esse email — tenta entrar em vez de cadastrar.",
@@ -81,6 +82,25 @@ export default async function CadastrarPage({
                 className="campo"
                 required
               />
+            </div>
+            <div>
+              <label className="rotulo" htmlFor="codigoRecuperacao">
+                Código de recuperação
+              </label>
+              <input
+                id="codigoRecuperacao"
+                name="codigoRecuperacao"
+                type="text"
+                minLength={4}
+                placeholder="Uma palavra ou número só seu, mín. 4 caracteres"
+                className="campo"
+                required
+              />
+              <p className="mt-1 text-xs text-neutral-400">
+                Guarda esse código — junto com o email, ele troca sua senha
+                sozinho em &quot;Esqueci minha senha&quot;, sem precisar de
+                admin.
+              </p>
             </div>
             {erro && (
               <p className="text-sm text-red-600">

@@ -681,11 +681,14 @@ export type UserRow = {
   isAdmin: boolean;
   active: boolean;
   createdAt: string;
+  /** Se já tem um código de "esqueci minha senha" definido */
+  temCodigoRecuperacao: boolean;
 };
 
 export async function getUsers(): Promise<UserRow[]> {
   const { rows } = await db.execute(sql`
-    select id, email, name, is_admin as "isAdmin", active, created_at as "createdAt"
+    select id, email, name, is_admin as "isAdmin", active, created_at as "createdAt",
+           (recovery_code_hash is not null) as "temCodigoRecuperacao"
     from users
     order by created_at
   `);
@@ -696,6 +699,7 @@ export async function getUsers(): Promise<UserRow[]> {
     isAdmin: Boolean(r.isAdmin),
     active: Boolean(r.active),
     createdAt: String(r.createdAt),
+    temCodigoRecuperacao: Boolean(r.temCodigoRecuperacao),
   }));
 }
 

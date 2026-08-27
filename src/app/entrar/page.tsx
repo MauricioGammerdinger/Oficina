@@ -5,9 +5,9 @@ import { IlustracaoOficina } from "@/components/ilustracao-oficina";
 export default async function EntrarPage({
   searchParams,
 }: {
-  searchParams: Promise<{ erro?: string }>;
+  searchParams: Promise<{ erro?: string; recuperada?: string }>;
 }) {
-  const { erro } = await searchParams;
+  const { erro, recuperada } = await searchParams;
 
   return (
     <main className="mx-auto flex min-h-screen max-w-4xl items-center px-4 py-8 sm:px-6">
@@ -21,6 +21,12 @@ export default async function EntrarPage({
           <p className="mb-6 mt-1 text-sm text-neutral-500">
             Estoque e checklist dos carros.
           </p>
+
+          {recuperada && (
+            <p className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
+              Senha trocada! Já pode entrar com a senha nova.
+            </p>
+          )}
 
           <form action={entrar} className="space-y-3">
             <div>
@@ -56,7 +62,16 @@ export default async function EntrarPage({
             <button className="botao w-full">Entrar</button>
           </form>
 
-          <p className="mt-4 text-center text-xs text-neutral-400">
+          <p className="mt-4 text-center text-xs">
+            <Link
+              href="/esqueci-senha"
+              className="text-neutral-400 underline hover:text-neutral-600 dark:hover:text-neutral-300"
+            >
+              Esqueci minha senha
+            </Link>
+          </p>
+
+          <p className="mt-3 text-center text-xs text-neutral-400">
             Foi convidado(a) e ainda não tem conta?{" "}
             <Link href="/cadastrar" className="underline hover:text-neutral-600">
               Criar conta

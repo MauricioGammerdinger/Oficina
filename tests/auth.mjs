@@ -84,6 +84,7 @@ await page2.locator('input[name="name"]').fill("Intruso");
 await page2.locator('input[name="email"]').fill("intruso@teste.com");
 await page2.locator('input[name="senha"]').fill("qualquer123");
 await page2.locator('input[name="confirmarSenha"]').fill("qualquer123");
+await page2.locator('input[name="codigoRecuperacao"]').fill("codigo123");
 await Promise.all([
   page2.waitForURL(/erro=semConvite/),
   page2.locator('button:has-text("Criar conta")').click(),
@@ -96,6 +97,7 @@ await page2.locator('input[name="name"]').fill("Cannabis");
 await page2.locator('input[name="email"]').fill("cannabis@teste.com");
 await page2.locator('input[name="senha"]').fill("senhadacannabis");
 await page2.locator('input[name="confirmarSenha"]').fill("senhadacannabis");
+await page2.locator('input[name="codigoRecuperacao"]').fill("codigosecreto");
 await Promise.all([
   page2.waitForURL(/\/estoque/),
   page2.locator('button:has-text("Criar conta")').click(),
@@ -161,6 +163,41 @@ await Promise.all([
 ]);
 ok("senha nova (resetada pelo admin) funciona");
 await page4.close();
+
+// --- "esqueci minha senha": email + código de recuperação trocam a senha
+// sozinhos, sem passar pelo admin. Usa o código que a Cannabis definiu no
+// cadastro ("codigosecreto").
+const page5 = await browser.newPage();
+await page5.goto(`${base}/esqueci-senha`);
+await page5.locator('input[name="email"]').fill("cannabis@teste.com");
+await page5.locator('input[name="codigo"]').fill("codigo-errado");
+await page5.locator('input[name="novaSenha"]').fill("senhaviaCodigo1");
+await page5.locator('input[name="confirmarNovaSenha"]').fill("senhaviaCodigo1");
+await Promise.all([
+  page5.waitForURL(/erro=codigo/),
+  page5.locator('button:has-text("Trocar senha")').click(),
+]);
+ok("código de recuperação errado é rejeitado");
+
+await page5.goto(`${base}/esqueci-senha`);
+await page5.locator('input[name="email"]').fill("cannabis@teste.com");
+await page5.locator('input[name="codigo"]').fill("codigosecreto");
+await page5.locator('input[name="novaSenha"]').fill("senhaviaCodigo1");
+await page5.locator('input[name="confirmarNovaSenha"]').fill("senhaviaCodigo1");
+await Promise.all([
+  page5.waitForURL(/\/entrar\?recuperada=1/),
+  page5.locator('button:has-text("Trocar senha")').click(),
+]);
+ok("código de recuperação certo troca a senha e volta pro login");
+
+await page5.locator('input[name="email"]').fill("cannabis@teste.com");
+await page5.locator('input[name="senha"]').fill("senhaviaCodigo1");
+await Promise.all([
+  page5.waitForURL(/\/estoque/),
+  page5.locator('button:has-text("Entrar")').click(),
+]);
+ok("login funciona com a senha trocada via código de recuperação");
+await page5.close();
 
 console.log(log.join("\n"));
 const falhas = log.filter((l) => l.startsWith("FAIL")).length;

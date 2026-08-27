@@ -75,10 +75,12 @@ export async function cadastrar(formData: FormData) {
   const name = parseStr(formData.get("name")) ?? "";
   const senha = String(formData.get("senha") ?? "");
   const confirmarSenha = String(formData.get("confirmarSenha") ?? "");
+  const codigoRecuperacao = String(formData.get("codigoRecuperacao") ?? "");
 
   if (!email || !name) redirect("/cadastrar?erro=dados");
   if (senha.length < 6) redirect("/cadastrar?erro=senhaCurta");
   if (senha !== confirmarSenha) redirect("/cadastrar?erro=senhaDiferente");
+  if (codigoRecuperacao.length < 4) redirect("/cadastrar?erro=codigoCurto");
 
   const [convite] = await db
     .select({ id: allowedSignupEmails.id })
@@ -92,14 +94,53 @@ export async function cadastrar(formData: FormData) {
     .where(eq(users.email, email));
   if (existente) redirect("/cadastrar?erro=jaExiste");
 
-  const passwordHash = await hashPassword(senha);
+  const [passwordHash, recoveryCodeHash] = await Promise.all([
+    hashPassword(senha),
+    hashPassword(codigoRecuperacao),
+  ]);
   const [criado] = await db
     .insert(users)
-    .values({ email, name, passwordHash })
+    .values({ email, name, passwordHash, recoveryCodeHash })
     .returning({ id: users.id });
 
   await abrirSessaoPara(criado.id);
   redirect("/estoque");
+}
+
+/* -------------------------------------------------------- esqueci a senha */
+
+/**
+ * Troca a própria senha sabendo email + código de recuperação — sem
+ * precisar de admin nem de email de verdade. Só funciona se a conta já
+ * tem um código definido (no cadastro, ou por um admin em Usuários).
+ */
+export async function recuperarSenha(formData: FormData) {
+  const email = normalizarEmail(String(formData.get("email") ?? ""));
+  const codigo = String(formData.get("codigo") ?? "");
+  const novaSenha = String(formData.get("novaSenha") ?? "");
+  const confirmarNovaSenha = String(formData.get("confirmarNovaSenha") ?? "");
+
+  if (novaSenha.length < 6) redirect("/esqueci-senha?erro=senhaCurta");
+  if (novaSenha !== confirmarNovaSenha) redirect("/esqueci-senha?erro=senhaDiferente");
+
+  const [user] = await db
+    .select({ id: users.id, recoveryCodeHash: users.recoveryCodeHash })
+    .from(users)
+    .where(eq(users.email, email));
+
+  // Confere o código mesmo quando o email não existe ou não tem código
+  // definido ainda, contra um hash qualquer — pra não dar mais rápido pra
+  // descobrir por tempo de resposta quais emails têm conta.
+  const codigoOk = await verifyPassword(codigo, user?.recoveryCodeHash ?? HASH_FALSO);
+
+  if (!user || !user.recoveryCodeHash || !codigoOk) {
+    redirect("/esqueci-senha?erro=codigo");
+  }
+
+  const passwordHash = await hashPassword(novaSenha);
+  await db.update(users).set({ passwordHash }).where(eq(users.id, user.id));
+
+  redirect("/entrar?recuperada=1");
 }
 
 /* -------------------------------------------------------------------- admin */
@@ -139,6 +180,17 @@ export async function resetarSenhaUsuario(formData: FormData) {
 
   const passwordHash = await hashPassword(novaSenha);
   await db.update(users).set({ passwordHash }).where(eq(users.id, id));
+  revalidatePath("/admin");
+}
+
+export async function definirCodigoRecuperacao(formData: FormData) {
+  await exigirAdmin();
+  const id = parseId(formData.get("id"));
+  const novoCodigo = String(formData.get("novoCodigo") ?? "");
+  if (novoCodigo.length < 4) return;
+
+  const recoveryCodeHash = await hashPassword(novoCodigo);
+  await db.update(users).set({ recoveryCodeHash }).where(eq(users.id, id));
   revalidatePath("/admin");
 }
 

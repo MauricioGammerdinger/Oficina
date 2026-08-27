@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import {
   alternarUsuarioAtivo,
   convidarEmail,
+  definirCodigoRecuperacao,
   removerConvite,
   resetarSenhaUsuario,
 } from "@/app/actions";
@@ -139,6 +140,37 @@ export default async function AdminPage() {
               <p className="text-xs text-neutral-400">
                 Digite uma senha nova e avise a pessoa por fora (WhatsApp,
                 etc.) — não tem envio de email automático ainda.
+              </p>
+
+              <form
+                action={definirCodigoRecuperacao}
+                className="flex flex-wrap items-end gap-2"
+              >
+                <input type="hidden" name="id" value={u.id} />
+                <div className="min-w-40 flex-1">
+                  <label className="rotulo">
+                    {u.temCodigoRecuperacao
+                      ? "Trocar código de recuperação"
+                      : "Definir código de recuperação"}
+                  </label>
+                  <input
+                    name="novoCodigo"
+                    type="text"
+                    placeholder="Mínimo 4 caracteres"
+                    minLength={4}
+                    className="campo"
+                  />
+                </div>
+                <button className="botao-claro">Salvar código</button>
+              </form>
+              <p className="text-xs text-neutral-400">
+                {u.temCodigoRecuperacao ? (
+                  "Já tem um código definido — a pessoa usa email + esse código em “Esqueci minha senha” pra trocar a senha sozinha, sem precisar de admin."
+                ) : (
+                  <>
+                    <strong className="text-amber-600">Sem código ainda</strong> — enquanto não definir, &quot;Esqueci minha senha&quot; não funciona pra essa conta, e só um admin consegue resetar a senha dela.
+                  </>
+                )}
               </p>
 
               {u.id !== usuario.id && (

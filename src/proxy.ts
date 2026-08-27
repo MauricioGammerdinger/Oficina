@@ -21,5 +21,5 @@ export default async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!entrar|cadastrar|_next|favicon.ico).*)"],
+  matcher: ["/((?!entrar|cadastrar|esqueci-senha|_next|favicon.ico).*)"],
 };
