@@ -1,4 +1,9 @@
-import { abrirContagem, fecharContagem, salvarContagem } from "@/app/actions";
+import {
+  abrirContagem,
+  excluirContagem,
+  fecharContagem,
+  salvarContagem,
+} from "@/app/actions";
 import { BotaoImprimir } from "@/components/botao-imprimir";
 import { money, qty as fmtQty } from "@/lib/parse";
 import { getCountHistory, getOpenCount } from "@/lib/queries";
@@ -126,6 +131,15 @@ export default async function ContagemPage() {
         </form>
       )}
 
+      {aberta && (
+        <form action={excluirContagem} className="print:hidden">
+          <input type="hidden" name="id" value={aberta.id} />
+          <button className="text-xs text-neutral-400 hover:text-red-600">
+            cancelar essa contagem
+          </button>
+        </form>
+      )}
+
       {historico.length > 0 && (
         <section className="cartao p-4 print:hidden">
           <h2 className="text-sm font-medium">Contagens anteriores</h2>
@@ -141,6 +155,12 @@ export default async function ContagemPage() {
                 <span className="shrink-0 tabular-nums text-neutral-500">
                   {money(c.diffValue)} de diferença
                 </span>
+                <form action={excluirContagem}>
+                  <input type="hidden" name="id" value={c.id} />
+                  <button className="shrink-0 text-xs text-neutral-400 hover:text-red-600">
+                    apagar
+                  </button>
+                </form>
               </li>
             ))}
           </ul>

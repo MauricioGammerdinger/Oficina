@@ -696,3 +696,16 @@ export async function fecharContagem(formData: FormData) {
   revalidatePath("/comprar");
 }
 
+/**
+ * Apaga uma contagem — tanto uma aberta que ela quer cancelar (começou por
+ * engano) quanto uma já fechada no histórico. Se já tiver sido fechada e
+ * gerado ajustes de estoque, esses ajustes já viraram movimentos normais e
+ * continuam no histórico — apagar a contagem não desfaz o estoque, só
+ * remove o registro da contagem em si.
+ */
+export async function excluirContagem(formData: FormData) {
+  const id = parseId(formData.get("id"));
+  await db.delete(counts).where(eq(counts.id, id));
+  revalidatePath("/contagem");
+}
+
