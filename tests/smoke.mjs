@@ -44,8 +44,10 @@ else bad("rota protegida NAO redirecionou");
 
 await page.fill('input[name="email"]', email);
 await page.fill('input[name="senha"]', "errada");
-await page.click('button:has-text("Entrar")');
-await page.waitForLoadState("networkidle");
+await Promise.all([
+  page.waitForURL(/erro=1/, { timeout: 15000 }),
+  page.click('button:has-text("Entrar")'),
+]);
 if (await page.locator("text=Email ou senha incorretos").isVisible())
   ok("senha errada é rejeitada");
 else bad("senha errada passou");
