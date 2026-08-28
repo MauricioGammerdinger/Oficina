@@ -1,7 +1,8 @@
+import Link from "next/link";
 import { sair } from "@/app/actions";
 import { AlternarTema } from "@/components/alternar-tema";
 import { Nav } from "@/components/nav";
-import { getShoppingList } from "@/lib/queries";
+import { getPerfis, getShoppingList } from "@/lib/queries";
 import { getUsuarioLogado } from "@/lib/sessao";
 
 // Nada aqui pode ser gerado no build: o layout lê o banco a cada acesso.
@@ -19,6 +20,11 @@ export default async function AppLayout({
     getShoppingList(),
     getUsuarioLogado(),
   ]);
+  // Só busca a lista de perfis se a conta realmente usa isso — a maioria
+  // dos logins (sem ninguém dividindo com outra pessoa) nunca cadastrou
+  // nenhum, então evita uma consulta a mais na navegação comum.
+  const perfis = usuario ? await getPerfis(usuario.id) : [];
+  const mostrarTrocaDePerfil = perfis.length >= 2;
 
   return (
     // Um "cartão" único e arredondado envolvendo tudo — menu e conteúdo —
@@ -36,6 +42,14 @@ export default async function AppLayout({
           {/* Botão de claro/escuro logo no topo, bem visível — antes ficava
               lá embaixo como texto pequeno e cinza e ninguém achava. */}
           <AlternarTema />
+          {mostrarTrocaDePerfil && (
+            <Link
+              href="/quem-e-voce"
+              className="mt-2 truncate text-xs text-neutral-400 underline hover:text-neutral-600 dark:hover:text-neutral-300"
+            >
+              Você é: {usuario?.profileName ?? "?"} · trocar
+            </Link>
+          )}
           <div className="mt-4">
             <Nav
               alertas={compras.length}
@@ -72,7 +86,17 @@ export default async function AppLayout({
                 </button>
               </form>
             </div>
-            <AlternarTema />
+            <div className="flex items-center justify-between gap-2">
+              <AlternarTema />
+              {mostrarTrocaDePerfil && (
+                <Link
+                  href="/quem-e-voce"
+                  className="truncate text-xs text-neutral-400 underline hover:text-neutral-600 dark:hover:text-neutral-300"
+                >
+                  Você é: {usuario?.profileName ?? "?"} · trocar
+                </Link>
+              )}
+            </div>
           </header>
           {children}
         </div>

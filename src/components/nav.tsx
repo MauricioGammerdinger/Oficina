@@ -16,6 +16,8 @@ const links: {
   { href: "/contagem", label: "Contagem", icon: "contagem" },
   { href: "/servicos", label: "Serviços", icon: "servicos" },
   { href: "/relatorios", label: "Relatórios", icon: "relatorios" },
+  { href: "/historico", label: "Histórico", icon: "historico" },
+  { href: "/perfis", label: "Perfis", icon: "perfis" },
 ];
 
 /**
@@ -94,6 +96,23 @@ function Icone({ nome, className }: { nome: string; className?: string }) {
         <svg {...props}>
           <circle cx="12" cy="8" r="3.2" />
           <path d="M4.5 20.2c1.1-3.3 4-5.2 7.5-5.2s6.4 1.9 7.5 5.2" />
+        </svg>
+      );
+    case "historico":
+      return (
+        <svg {...props}>
+          <path d="M3 12a9 9 0 1 0 2.6-6.3" />
+          <path d="M3 4v5h5" />
+          <path d="M12 7v5l3.5 3.5" />
+        </svg>
+      );
+    case "perfis":
+      return (
+        <svg {...props}>
+          <circle cx="9" cy="8" r="3" />
+          <path d="M3.5 19c0.7-3 3-4.8 5.5-4.8s4.8 1.8 5.5 4.8" />
+          <circle cx="17" cy="7.5" r="2.3" />
+          <path d="M16 14.5c2.3 0.4 4 2 4.5 4.5" />
         </svg>
       );
     default:

@@ -10,9 +10,9 @@ import { COOKIE_NAME, lerSessao } from "@/lib/auth";
  */
 export default async function proxy(request: NextRequest) {
   const cookie = request.cookies.get(COOKIE_NAME)?.value;
-  const userId = await lerSessao(cookie);
+  const sessao = await lerSessao(cookie);
 
-  if (userId !== null) return NextResponse.next();
+  if (sessao !== null) return NextResponse.next();
 
   const url = request.nextUrl.clone();
   url.pathname = "/entrar";

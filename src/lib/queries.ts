@@ -703,3 +703,44 @@ export async function getUsers(): Promise<UserRow[]> {
   }));
 }
 
+/* ------------------------------------------------------------------ perfis */
+
+export type PerfilRow = { id: number; name: string };
+
+/** Perfis (nomes) cadastrados sob um mesmo login — pra ela e quem trabalha
+ * com ela aparecerem separados no histórico mesmo entrando com a mesma
+ * conta. */
+export async function getPerfis(userId: number): Promise<PerfilRow[]> {
+  const { rows } = await db.execute(sql`
+    select id, name from profiles where user_id = ${userId} order by created_at
+  `);
+  return rows.map((r) => ({ id: num(r.id), name: String(r.name) }));
+}
+
+/* --------------------------------------------------------------- histórico */
+
+export type AtividadeRow = {
+  id: number;
+  at: string;
+  userName: string;
+  profileName: string | null;
+  description: string;
+};
+
+/** Últimas ações registradas (quem fez o quê, e quando) — mais recente primeiro. */
+export async function getAtividades(limite = 200): Promise<AtividadeRow[]> {
+  const { rows } = await db.execute(sql`
+    select id, at, user_name as "userName", profile_name as "profileName", description
+    from activity_log
+    order by at desc
+    limit ${limite}
+  `);
+  return rows.map((r) => ({
+    id: num(r.id),
+    at: String(r.at),
+    userName: String(r.userName),
+    profileName: r.profileName === null ? null : String(r.profileName),
+    description: String(r.description),
+  }));
+}
+

@@ -7,9 +7,11 @@ import { revalidatePath } from "next/cache";
 
 import { db } from "@/db";
 import {
+  activityLog,
   countItems,
   counts,
   products,
+  profiles,
   serviceTypeItems,
   serviceTypes,
   stockMoves,
@@ -23,20 +25,37 @@ import { fifoCostForNewConsumption } from "@/lib/fifo";
 import { parseId, parseNum, parseStr } from "@/lib/parse";
 import {
   getMoveHistoryForFifo,
+  getPerfis,
   getProducts,
   getVehiclePlannedItems,
 } from "@/lib/queries";
 import { getUsuarioLogado } from "@/lib/sessao";
 import { HASH_FALSO, hashPassword, verifyPassword } from "@/lib/senha";
 
-async function abrirSessaoPara(userId: number) {
+async function abrirSessaoPara(userId: number, profileId: number | null = null) {
   const jar = await cookies();
-  jar.set(COOKIE_NAME, await criarSessao(userId), {
+  jar.set(COOKIE_NAME, await criarSessao(userId, profileId), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: Math.floor(VALIDADE_MS / 1000),
+  });
+}
+
+/**
+ * Registra uma linha no histórico ("quem fez o quê, quando"). Silencioso
+ * se por algum motivo não tiver sessão — nunca deve travar a ação em si
+ * por causa do registro dela.
+ */
+async function registrarAtividade(description: string) {
+  const usuario = await getUsuarioLogado();
+  if (!usuario) return;
+  await db.insert(activityLog).values({
+    userId: usuario.id,
+    userName: usuario.name,
+    profileName: usuario.profileName,
+    description,
   });
 }
 
@@ -64,8 +83,56 @@ export async function entrar(formData: FormData) {
   // desativada por um admin) — mensagem diferente da de senha errada.
   if (!user.active) redirect("/entrar?erro=pendente");
 
-  await abrirSessaoPara(user.id);
+  // Login é só por conta; "perfil" é só pra saber quem, entre quem usa o
+  // mesmo login, fez cada coisa (histórico) — sem perfil ou com só um
+  // cadastrado, entra direto sem perguntar nada.
+  const perfis = await getPerfis(user.id);
+  await abrirSessaoPara(user.id, perfis.length === 1 ? perfis[0].id : null);
+  redirect(perfis.length >= 2 ? "/quem-e-voce" : "/estoque");
+}
+
+/**
+ * Troca o perfil ativo dentro da mesma sessão já logada — sem pedir senha
+ * de novo. É só reassinar o cookie com o novo profileId.
+ */
+export async function escolherPerfil(formData: FormData) {
+  const usuario = await getUsuarioLogado();
+  if (!usuario) redirect("/entrar");
+  const profileId = parseId(formData.get("profileId"));
+
+  const [perfil] = await db
+    .select({ id: profiles.id })
+    .from(profiles)
+    .where(and(eq(profiles.id, profileId), eq(profiles.userId, usuario.id)));
+  if (!perfil) redirect("/quem-e-voce");
+
+  await abrirSessaoPara(usuario.id, perfil.id);
   redirect("/estoque");
+}
+
+/* ------------------------------------------------------------------ perfis */
+
+export async function criarPerfil(formData: FormData) {
+  const usuario = await getUsuarioLogado();
+  if (!usuario) redirect("/entrar");
+  const name = parseStr(formData.get("name"));
+  if (!name) return;
+
+  await db.insert(profiles).values({ userId: usuario.id, name }).onConflictDoNothing();
+  revalidatePath("/perfis");
+}
+
+export async function removerPerfil(formData: FormData) {
+  const usuario = await getUsuarioLogado();
+  if (!usuario) redirect("/entrar");
+  const id = parseId(formData.get("id"));
+
+  await db
+    .delete(profiles)
+    .where(and(eq(profiles.id, id), eq(profiles.userId, usuario.id)));
+  // Se o perfil apagado era o ativo na sessão, volta a pedir pra escolher
+  // de novo na próxima ação que precisar — mais simples que forçar logout.
+  revalidatePath("/perfis");
 }
 
 /* ---------------------------------------------------------------- cadastro */
@@ -224,6 +291,7 @@ export async function criarProduto(formData: FormData) {
 
   revalidatePath("/estoque");
   revalidatePath("/comprar");
+  await registrarAtividade(`cadastrou o insumo "${name}"`);
 }
 
 export async function editarProduto(formData: FormData) {
@@ -245,14 +313,20 @@ export async function editarProduto(formData: FormData) {
   revalidatePath("/estoque");
   revalidatePath("/comprar");
   revalidatePath("/servicos");
+  await registrarAtividade(`editou o insumo "${name}"`);
 }
 
 export async function arquivarProduto(formData: FormData) {
   const id = parseId(formData.get("id"));
+  const [produto] = await db
+    .select({ name: products.name })
+    .from(products)
+    .where(eq(products.id, id));
   // Arquiva em vez de apagar: o histórico de movimentos continua válido.
   await db.update(products).set({ active: false }).where(eq(products.id, id));
   revalidatePath("/estoque");
   revalidatePath("/comprar");
+  await registrarAtividade(`arquivou o insumo "${produto?.name ?? id}"`);
 }
 
 /* --------------------------------------------------------------- estoque */
@@ -273,19 +347,27 @@ export async function movimentar(formData: FormData) {
   // com o que realmente foi pago pelo material que saiu, mesmo depois do
   // preço de referência já ter mudado.
   let custoSaida: number | null = null;
+  let produto: { cost: number; name: string } | undefined;
   if (kind === "out") {
-    const [historico, [produto]] = await Promise.all([
+    const [historico, [p]] = await Promise.all([
       getMoveHistoryForFifo(productId),
       db
-        .select({ cost: products.cost })
+        .select({ cost: products.cost, name: products.name })
         .from(products)
         .where(eq(products.id, productId)),
     ]);
+    produto = p;
     custoSaida = fifoCostForNewConsumption(
       historico,
       quantidade,
       produto?.cost ?? 0
     );
+  } else {
+    const [p] = await db
+      .select({ cost: products.cost, name: products.name })
+      .from(products)
+      .where(eq(products.id, productId));
+    produto = p;
   }
 
   await db.insert(stockMoves).values({
@@ -309,6 +391,13 @@ export async function movimentar(formData: FormData) {
   revalidatePath("/estoque");
   revalidatePath("/comprar");
   revalidatePath("/carros");
+
+  const nomeProduto = produto?.name ?? String(productId);
+  await registrarAtividade(
+    kind === "in"
+      ? `deu entrada de ${quantidade} em "${nomeProduto}"`
+      : `deu saída de ${quantidade} em "${nomeProduto}"`
+  );
 }
 
 /* ------------------------------------------------------- tipos de serviço */
@@ -392,6 +481,7 @@ export async function criarVeiculo(formData: FormData) {
     .returning({ id: vehicles.id });
 
   revalidatePath("/carros");
+  await registrarAtividade(`cadastrou o carro "${model}"`);
   redirect(`/carros/${created.id}`);
 }
 
@@ -416,6 +506,7 @@ export async function atualizarVeiculo(formData: FormData) {
 
   revalidatePath("/carros");
   revalidatePath(`/carros/${id}`);
+  await registrarAtividade(`editou o carro "${model}"`);
 }
 
 export async function definirStatusVeiculo(formData: FormData) {
@@ -423,9 +514,16 @@ export async function definirStatusVeiculo(formData: FormData) {
   const status = String(formData.get("status"));
   if (!["previsto", "andamento", "concluido"].includes(status)) return;
 
+  const [veiculo] = await db
+    .select({ model: vehicles.model })
+    .from(vehicles)
+    .where(eq(vehicles.id, id));
   await db.update(vehicles).set({ status }).where(eq(vehicles.id, id));
   revalidatePath("/carros");
   revalidatePath(`/carros/${id}`);
+  await registrarAtividade(
+    `mudou o status do carro "${veiculo?.model ?? id}" para ${status}`
+  );
 }
 
 export async function alternarServico(formData: FormData) {
@@ -456,6 +554,10 @@ export async function alternarServico(formData: FormData) {
 
 export async function excluirVeiculo(formData: FormData) {
   const id = parseId(formData.get("id"));
+  const [veiculo] = await db
+    .select({ model: vehicles.model })
+    .from(vehicles)
+    .where(eq(vehicles.id, id));
   // Solta os movimentos antes, para não perder histórico de estoque.
   await db
     .update(stockMoves)
@@ -463,6 +565,7 @@ export async function excluirVeiculo(formData: FormData) {
     .where(eq(stockMoves.vehicleId, id));
   await db.delete(vehicles).where(eq(vehicles.id, id));
   revalidatePath("/carros");
+  await registrarAtividade(`excluiu o carro "${veiculo?.model ?? id}"`);
   redirect("/carros");
 }
 
@@ -497,6 +600,9 @@ export async function baixarPrevistos(formData: FormData) {
   revalidatePath("/comprar");
   revalidatePath("/carros");
   revalidatePath(`/carros/${vehicleId}`);
+  await registrarAtividade(
+    `baixou os insumos previstos do carro #${vehicleId}`
+  );
 }
 
 /**
@@ -527,14 +633,22 @@ export async function adicionarPeca(formData: FormData) {
 
   revalidatePath(`/carros/${vehicleId}`);
   revalidatePath("/carros");
+  await registrarAtividade(`adicionou a peça "${name}" no carro #${vehicleId}`);
 }
 
 export async function removerPeca(formData: FormData) {
   const id = parseId(formData.get("id"));
   const vehicleId = parseId(formData.get("vehicleId"));
+  const [peca] = await db
+    .select({ name: vehicleParts.name })
+    .from(vehicleParts)
+    .where(eq(vehicleParts.id, id));
   await db.delete(vehicleParts).where(eq(vehicleParts.id, id));
   revalidatePath(`/carros/${vehicleId}`);
   revalidatePath("/carros");
+  await registrarAtividade(
+    `removeu a peça "${peca?.name ?? id}" do carro #${vehicleId}`
+  );
 }
 
 /* -------------------------------------------------------------- contagem */
@@ -671,6 +785,7 @@ export async function fecharContagem(formData: FormData) {
   revalidatePath("/contagem");
   revalidatePath("/estoque");
   revalidatePath("/comprar");
+  await registrarAtividade(`fechou a contagem #${countId}`);
 }
 
 /**
@@ -684,5 +799,6 @@ export async function excluirContagem(formData: FormData) {
   const id = parseId(formData.get("id"));
   await db.delete(counts).where(eq(counts.id, id));
   revalidatePath("/contagem");
+  await registrarAtividade(`apagou a contagem #${id}`);
 }
 

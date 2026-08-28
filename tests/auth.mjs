@@ -218,6 +218,70 @@ await Promise.all([
 ok("login funciona com a senha trocada via código de recuperação");
 await page5.close();
 
+// --- perfis: sem nenhum cadastrado, login não pergunta "quem é você"
+const page6 = await browser.newPage();
+await page6.goto(`${base}/entrar`);
+await page6.locator('input[name="email"]').fill("cannabis@teste.com");
+await page6.locator('input[name="senha"]').fill("senhaviaCodigo1");
+await Promise.all([
+  page6.waitForURL(/\/estoque/),
+  page6.locator('button:has-text("Entrar")').click(),
+]);
+ok("sem perfis cadastrados, login vai direto pro estoque");
+
+// --- cadastra dois nomes (Cannabis e Ramon) em /perfis
+await page6.goto(`${base}/perfis`);
+await page6.locator('input[name="name"]').fill("Cannabis");
+await page6.locator('button:has-text("Adicionar")').click();
+await page6.locator("text=Cannabis").first().waitFor({ timeout: 10000 });
+await page6.goto(`${base}/perfis`);
+await page6.locator('input[name="name"]').fill("Ramon");
+await page6.locator('button:has-text("Adicionar")').click();
+await page6.locator("text=Ramon").first().waitFor({ timeout: 10000 });
+await page6.goto(`${base}/perfis`);
+const textoPerfis = await page6.locator("main").innerText();
+if (textoPerfis.includes("Cannabis") && textoPerfis.includes("Ramon")) {
+  ok("os dois nomes aparecem cadastrados em /perfis");
+} else {
+  bad(`perfis não apareceram como esperado: ${textoPerfis.slice(0, 300)}`);
+}
+await page6.close();
+
+// --- com 2+ perfis, o próximo login pergunta "quem é você"
+const page7 = await browser.newPage();
+await page7.goto(`${base}/entrar`);
+await page7.locator('input[name="email"]').fill("cannabis@teste.com");
+await page7.locator('input[name="senha"]').fill("senhaviaCodigo1");
+await Promise.all([
+  page7.waitForURL(/\/quem-e-voce/),
+  page7.locator('button:has-text("Entrar")').click(),
+]);
+ok("com 2+ perfis, login pede pra escolher quem é");
+
+await Promise.all([
+  page7.waitForURL(/\/estoque/),
+  page7.locator('button:has-text("Ramon")').click(),
+]);
+ok("escolher um perfil segue pro estoque");
+
+// --- uma ação registrada aparece no histórico com o nome do perfil (Ramon)
+await page7.goto(`${base}/estoque`);
+const linhaHist = page7.locator("summary", { hasText: "Massa poliéster 900g" });
+await linhaHist.click();
+const blocoHist = page7.locator("details", { has: linhaHist }).first();
+await blocoHist.locator('form:has(input[value="in"]) input[name="qty"]').fill("1");
+await blocoHist.locator('button:has-text("Lançar entrada")').click();
+await page7.waitForTimeout(1500);
+
+await page7.goto(`${base}/historico`);
+const textoHistorico = await page7.locator("main").innerText();
+if (textoHistorico.includes("Ramon") && textoHistorico.includes("Massa poliéster")) {
+  ok("histórico mostra a ação com o nome do perfil (Ramon)");
+} else {
+  bad(`histórico não mostrou o esperado: ${textoHistorico.slice(0, 400)}`);
+}
+await page7.close();
+
 console.log(log.join("\n"));
 const falhas = log.filter((l) => l.startsWith("FAIL")).length;
 console.log(`\n${log.length - falhas} ok, ${falhas} falhas`);

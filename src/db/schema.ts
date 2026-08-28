@@ -217,6 +217,52 @@ export const users = pgTable(
 );
 
 /**
+ * Nomes de quem usa um mesmo login (email + senha) — pensado pra quando
+ * duas pessoas (ex.: Cannabis e um ajudante) trabalham juntas e não faz
+ * sentido cada uma ter email/senha próprios. Login continua sendo por
+ * conta (`users`); depois de entrar, se a conta tiver 2+ perfis, escolhe
+ * "quem é você" só pra identificar no histórico quem fez cada coisa —
+ * não é uma segunda camada de senha.
+ */
+export const profiles = pgTable(
+  "profiles",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [uniqueIndex("perfil_unico_por_login").on(table.userId, table.name)]
+);
+
+/**
+ * Histórico de "quem alterou o quê e quando" — uma linha por ação
+ * relevante (cadastrou carro, deu baixa, etc.), guardando o nome já
+ * pronto (da conta e do perfil escolhido) em vez de só o id, pra o
+ * histórico continuar legível mesmo se a conta ou o perfil forem
+ * apagados depois.
+ */
+export const activityLog = pgTable(
+  "activity_log",
+  {
+    id: serial("id").primaryKey(),
+    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+    userId: integer("user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    userName: text("user_name").notNull(),
+    /** Nome do perfil escolhido (Cannabis, Ramon...) — nulo se a conta não usa perfis. */
+    profileName: text("profile_name"),
+    description: text("description").notNull(),
+  },
+  (table) => [index("activity_log_at_idx").on(table.at)]
+);
+
+/**
  * Tabela sem uso hoje — cadastro era fechado por convite prévio (só quem
  * tinha o email aqui conseguia criar conta). Trocado por cadastro aberto +
  * aprovação de admin (ver `active` em users e `cadastrar`/`alternarUsuarioAtivo`
