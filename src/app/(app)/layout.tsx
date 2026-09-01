@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { sair } from "@/app/actions";
 import { AlternarTema } from "@/components/alternar-tema";
+import { IconeSair, IconeTrocar } from "@/components/icones-acao";
 import { Nav } from "@/components/nav";
 import { getPerfis, getShoppingList } from "@/lib/queries";
 import { getUsuarioLogado } from "@/lib/sessao";
@@ -42,14 +43,23 @@ export default async function AppLayout({
           {/* Botão de claro/escuro logo no topo, bem visível — antes ficava
               lá embaixo como texto pequeno e cinza e ninguém achava. */}
           <AlternarTema />
-          {mostrarTrocaDePerfil && (
-            <Link
-              href="/quem-e-voce"
-              className="mt-2 truncate text-xs text-neutral-400 underline hover:text-neutral-600 dark:hover:text-neutral-300"
-            >
-              Você é: {usuario?.profileName ?? "?"} · trocar
-            </Link>
-          )}
+          {mostrarTrocaDePerfil &&
+            (usuario?.profileName ? (
+              <div className="mt-2 flex items-center justify-between gap-1 rounded-lg bg-neutral-50 pl-2 dark:bg-neutral-950">
+                <span className="min-w-0 flex-1 truncate text-xs text-neutral-500 dark:text-neutral-400">
+                  {usuario.profileName}
+                </span>
+                <Link href="/quem-e-voce" className="link-acao shrink-0">
+                  <IconeTrocar className="h-3.5 w-3.5" />
+                  trocar
+                </Link>
+              </div>
+            ) : (
+              <Link href="/quem-e-voce" className="link-acao mt-2">
+                <IconeTrocar className="h-3.5 w-3.5" />
+                Escolher quem é você
+              </Link>
+            ))}
           <div className="mt-4">
             <Nav
               alertas={compras.length}
@@ -64,7 +74,8 @@ export default async function AppLayout({
               </span>
             )}
             <form action={sair}>
-              <button className="shrink-0 text-xs text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-200">
+              <button className="link-acao shrink-0">
+                <IconeSair className="h-3.5 w-3.5" />
                 sair
               </button>
             </form>
@@ -81,21 +92,31 @@ export default async function AppLayout({
                 mostrarAdmin={usuario?.isAdmin ?? false}
               />
               <form action={sair}>
-                <button className="text-xs text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-200">
+                <button className="link-acao shrink-0">
+                  <IconeSair className="h-3.5 w-3.5" />
                   sair
                 </button>
               </form>
             </div>
             <div className="flex items-center justify-between gap-2">
               <AlternarTema />
-              {mostrarTrocaDePerfil && (
-                <Link
-                  href="/quem-e-voce"
-                  className="truncate text-xs text-neutral-400 underline hover:text-neutral-600 dark:hover:text-neutral-300"
-                >
-                  Você é: {usuario?.profileName ?? "?"} · trocar
-                </Link>
-              )}
+              {mostrarTrocaDePerfil &&
+                (usuario?.profileName ? (
+                  <div className="flex min-w-0 items-center gap-1 rounded-lg bg-neutral-50 pl-2 dark:bg-neutral-950">
+                    <span className="min-w-0 flex-1 truncate text-xs text-neutral-500 dark:text-neutral-400">
+                      {usuario.profileName}
+                    </span>
+                    <Link href="/quem-e-voce" className="link-acao shrink-0">
+                      <IconeTrocar className="h-3.5 w-3.5" />
+                      trocar
+                    </Link>
+                  </div>
+                ) : (
+                  <Link href="/quem-e-voce" className="link-acao">
+                    <IconeTrocar className="h-3.5 w-3.5" />
+                    Escolher quem é você
+                  </Link>
+                ))}
             </div>
           </header>
           {children}

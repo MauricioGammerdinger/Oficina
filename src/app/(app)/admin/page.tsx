@@ -4,6 +4,7 @@ import {
   definirCodigoRecuperacao,
   resetarSenhaUsuario,
 } from "@/app/actions";
+import { IconeLixo, IconeTrocar } from "@/components/icones-acao";
 import { getUsers } from "@/lib/queries";
 import { getUsuarioLogado } from "@/lib/sessao";
 
@@ -151,7 +152,12 @@ export default async function AdminPage() {
               {u.id !== usuario.id && (
                 <form action={alternarUsuarioAtivo}>
                   <input type="hidden" name="id" value={u.id} />
-                  <button className="text-xs text-neutral-400 hover:text-red-600">
+                  <button className={u.active ? "link-perigo" : "link-acao"}>
+                    {u.active ? (
+                      <IconeLixo className="h-3.5 w-3.5" />
+                    ) : (
+                      <IconeTrocar className="h-3.5 w-3.5" />
+                    )}
                     {u.active ? "desativar acesso" : "reativar acesso"}
                   </button>
                 </form>

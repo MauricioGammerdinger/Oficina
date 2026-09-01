@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { IconeSeta } from "@/components/icones-acao";
 import { money, qty as fmtQty } from "@/lib/parse";
 import { getResumoNegocio, getShoppingList, getVehicles } from "@/lib/queries";
 
@@ -33,11 +34,9 @@ export default async function InicioPage() {
         <div className="cartao p-4">
           <div className="flex items-baseline justify-between gap-2">
             <h2 className="text-sm font-medium">Carros em aberto</h2>
-            <Link
-              href="/carros"
-              className="text-xs text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
-            >
+            <Link href="/carros" className="link-nav">
               ver todos
+              <IconeSeta className="h-3.5 w-3.5" />
             </Link>
           </div>
 
@@ -81,11 +80,9 @@ export default async function InicioPage() {
                 </span>
               )}
             </h2>
-            <Link
-              href="/comprar"
-              className="text-xs text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
-            >
+            <Link href="/comprar" className="link-nav">
               ver tudo
+              <IconeSeta className="h-3.5 w-3.5" />
             </Link>
           </div>
 

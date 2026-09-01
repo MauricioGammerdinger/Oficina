@@ -10,6 +10,7 @@ import {
   excluirVeiculo,
   removerPeca,
 } from "@/app/actions";
+import { IconeLixo } from "@/components/icones-acao";
 import { money, qty as fmtQty } from "@/lib/parse";
 import {
   getServiceTypes,
@@ -322,10 +323,8 @@ export default async function CarroPage({
                 <form action={removerPeca}>
                   <input type="hidden" name="id" value={peca.id} />
                   <input type="hidden" name="vehicleId" value={carro.id} />
-                  <button
-                    className="shrink-0 text-xs text-neutral-400 hover:text-red-600"
-                    title="Remover"
-                  >
+                  <button className="link-perigo shrink-0" title="Remover">
+                    <IconeLixo className="h-3.5 w-3.5" />
                     remover
                   </button>
                 </form>
@@ -444,7 +443,8 @@ export default async function CarroPage({
 
         <form action={excluirVeiculo} className="mt-4">
           <input type="hidden" name="id" value={carro.id} />
-          <button className="text-xs text-neutral-400 hover:text-red-600">
+          <button className="link-perigo">
+            <IconeLixo className="h-3.5 w-3.5" />
             excluir carro
           </button>
         </form>

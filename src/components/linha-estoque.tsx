@@ -1,4 +1,5 @@
 import { arquivarProduto, editarProduto, movimentar } from "@/app/actions";
+import { IconeLixo } from "@/components/icones-acao";
 import { money, qty as fmtQty } from "@/lib/parse";
 import type { ProductRow } from "@/lib/queries";
 
@@ -154,7 +155,8 @@ export function LinhaEstoque({
 
           <form action={arquivarProduto} className="border-t border-neutral-100 p-3 dark:border-neutral-800">
             <input type="hidden" name="id" value={produto.id} />
-            <button className="text-xs text-neutral-400 hover:text-red-600">
+            <button className="link-perigo">
+              <IconeLixo className="h-3.5 w-3.5" />
               arquivar insumo
             </button>
           </form>

@@ -1,4 +1,5 @@
 import { criarPerfil, removerPerfil } from "@/app/actions";
+import { IconeLixo } from "@/components/icones-acao";
 import { getPerfis } from "@/lib/queries";
 import { getUsuarioLogado } from "@/lib/sessao";
 import { redirect } from "next/navigation";
@@ -49,7 +50,8 @@ export default async function PerfisPage() {
             </span>
             <form action={removerPerfil}>
               <input type="hidden" name="id" value={perfil.id} />
-              <button className="text-xs text-neutral-400 hover:text-red-600">
+              <button className="link-perigo">
+                <IconeLixo className="h-3.5 w-3.5" />
                 remover
               </button>
             </form>

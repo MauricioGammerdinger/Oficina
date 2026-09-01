@@ -3,6 +3,7 @@ import {
   criarTipoServico,
   salvarReceitaItem,
 } from "@/app/actions";
+import { IconeLixo } from "@/components/icones-acao";
 import { money } from "@/lib/parse";
 import { getProducts, getServiceTypes } from "@/lib/queries";
 
@@ -161,7 +162,8 @@ export default async function ServicosPage() {
 
             <form action={arquivarTipoServico} className="mt-3">
               <input type="hidden" name="id" value={tipo.id} />
-              <button className="text-xs text-neutral-400 hover:text-red-600">
+              <button className="link-perigo">
+                <IconeLixo className="h-3.5 w-3.5" />
                 arquivar serviço
               </button>
             </form>

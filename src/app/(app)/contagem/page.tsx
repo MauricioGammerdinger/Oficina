@@ -5,6 +5,7 @@ import {
   salvarContagem,
 } from "@/app/actions";
 import { BotaoImprimir } from "@/components/botao-imprimir";
+import { IconeLixo } from "@/components/icones-acao";
 import { money, qty as fmtQty } from "@/lib/parse";
 import { getCountHistory, getOpenCount } from "@/lib/queries";
 
@@ -134,7 +135,8 @@ export default async function ContagemPage() {
       {aberta && (
         <form action={excluirContagem} className="print:hidden">
           <input type="hidden" name="id" value={aberta.id} />
-          <button className="text-xs text-neutral-400 hover:text-red-600">
+          <button className="link-perigo">
+            <IconeLixo className="h-3.5 w-3.5" />
             cancelar essa contagem
           </button>
         </form>
@@ -157,7 +159,8 @@ export default async function ContagemPage() {
                 </span>
                 <form action={excluirContagem}>
                   <input type="hidden" name="id" value={c.id} />
-                  <button className="shrink-0 text-xs text-neutral-400 hover:text-red-600">
+                  <button className="link-perigo shrink-0">
+                    <IconeLixo className="h-3.5 w-3.5" />
                     apagar
                   </button>
                 </form>
